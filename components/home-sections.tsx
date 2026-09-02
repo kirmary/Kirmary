@@ -62,15 +62,15 @@ export function HomeSections({
         </Reveal>
 
         <div className="about-media-grid">
-          <div className="about-video">
-            <video
-              src="/videos/kirmary-archive.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-            />
+  <div className="about-video">
+    <iframe 
+      src="https://www.youtube.com/embed/3guUc0S_FoI?autoplay=1&mute=1&loop=1&playlist=3guUc0S_FoI&controls=0&showinfo=0" 
+      width="100%" 
+      height="100%" 
+      style={{ minHeight: '500px', border: 'none', pointerEvents: 'none' }}
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowFullScreen
+    />
 
             <span>VISUAL ARCHIVE // KIRMARY</span>
           </div>

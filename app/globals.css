@@ -9742,3 +9742,49 @@ html[dir="rtl"] .premium-about-sticky-stage__visual-inner img {
     object-fit: contain !important;
   }
 }
+/* ضبط اتجاه النصوص العربية في العناوين والنصوص لتظهر مرتبة بشكل صحيح */
+[dir="rtl"] h1, 
+[dir="rtl"] h2, 
+[dir="rtl"] h3, 
+[dir="rtl"] p {
+  unicode-bidi: plaintext;
+  text-align: right;
+}
+
+/* حل مشكلة تقاطع الكلمات الإنجليزية داخل الجمل العربية */
+.rtl-text, [dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+.page-header-container {
+  text-align: right;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #0b132b; /* أو اللون المعتمد في موقعك */
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  color: #495057;
+}
+.contact-us-page .section-header-wrapper {
+  direction: rtl;
+  text-align: right;
+  align-items: flex-end;
+  justify-content: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.contact-us-page .section-title,
+.contact-us-page .section-summary,
+.contact-us-page .section-label {
+  text-align: right;
+  direction: rtl;
+}

@@ -140,14 +140,26 @@ function Shell({
 >
 <style>{`
   .inner-page .inner-hero__content h1 {
-    max-width: 920px !important;
-    margin-inline: auto !important;
-    font-size: clamp(42px, 6vw, 78px) !important;
-    line-height: 1.25 !important;
-    letter-spacing: 0 !important;
-    word-spacing: 0.12em;
-    text-align: center;
-  }
+  max-width: 920px !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  font-size: clamp(42px, 6vw, 78px) !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  word-spacing: 0.12em;
+  text-align: right !important;
+}
+
+html[dir="rtl"] .inner-page .inner-hero__content {
+  text-align: right !important;
+  align-items: flex-end !important;
+}
+
+html[dir="rtl"] .inner-page .inner-hero__content h1,
+html[dir="rtl"] .inner-page .inner-hero__content .inner-kicker,
+html[dir="rtl"] .inner-page .inner-hero__content .inner-hero__summary {
+  text-align: right !important;
+}
 
   @media (max-width: 640px) {
     .inner-page .inner-hero__content h1 {
@@ -1161,14 +1173,10 @@ const images = allImages.slice(1);
           }
           title={
             ar
-              ? 'اختاري المجموعة لعرض صورها.'
+              ? 'اختار المجموعة لعرض صورها.'
               : 'Choose a collection to view its images.'
           }
-          copy={
-            ar
-              ? 'كل معرض أو براند له قسم مستقل يمكن إضافة الصور إليه.'
-              : 'Each exhibition and brand opens as an independent image gallery.'
-          }
+          
         />
 
         <div className="premium-listing-grid gallery-collection-list">
@@ -1542,12 +1550,9 @@ summary={
   }
 
   /* ==================================================
-     CONTACT
-  ================================================== */
-
-  /* ==================================================
    CONTACT
 ================================================== */
+
 if (root === 'contact') {
   const locations = [
     {
@@ -1562,9 +1567,7 @@ if (root === 'contact') {
 
       href:
         'https://maps.app.goo.gl/gMz2YDvTVQUTfK5z8'
-    },
-
-    
+    }
   ];
 
   const salesGroups = [
@@ -1614,234 +1617,247 @@ if (root === 'contact') {
     `https://wa.me/20${phone.slice(1)}`;
 
   return (
-    <Shell
-      pageClassName="contact-us-page"
+  <Shell
+    pageClassName="contact-us-page"
+    kicker={ar ? 'تواصل معنا' : 'CONTACT US'}
+    title={ar ? 'تواصل معنا' : 'Contact Us'}
+    summary={
+      ar
+        ? 'تواصل مع فريق KIRMARY لمناقشة احتياجات مشروعات مكافحة الحريق والتوريدات الفنية.'
+        : 'Connect with KIRMARY to discuss your fire protection projects, technical requirements and supply needs.'
+    }
+  >
 
-      kicker={
-        ar
-          ? 'القاهرة · مصر'
-          : 'CAIRO · EGYPT'
-      }
+      {/* CONTACT CONTENT */}
 
-      title={
-        ar
-          ? 'تواصل معنا'
-          : 'Contact Us'
-      }
+      <div className="premium-contact-page">
 
-      summary={
-        ar
-          ? 'شكرا لتواصلكم مع شركة كيرمارى لتوريدات معدات إطفاء الحريق - دكتور مهندس وائل بهيج.'
-          : 'Thank you for contacting KIRMARY for fire-fighting equipment supplies — Dr. Eng. Wael Bahig.'
-      }
-    >
-      <SectionIntro
-        label={
-          ar
-            ? 'قنوات التواصل'
-            : 'CONTACT CHANNELS'
-        }
+        {/* LOCATIONS */}
 
-        title={
-          ar
-            ? 'كل ما تحتاجه للتواصل مع KIRMARY في مكان واحد.'
-            : 'Everything you need to reach KIRMARY in one place.'
-        }
-      />
+        <div className="premium-location-grid">
 
-      {/* PRODUCTS + BRANDS */}
+          {locations.map((item) => (
+            <article key={item.number}>
 
-     
+              <span className="contact-card-number">
+                {item.number}
+              </span>
+
+              <p className="contact-card-label">
+                {item.label}
+              </p>
+
+              <h2>
+                {item.title}
+              </h2>
+
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="contact-action-button"
+              >
+                {ar
+                  ? 'فتح الموقع'
+                  : 'OPEN LOCATION'} ↗
+              </a>
+
+            </article>
+          ))}
+
+        </div>
 
 
+        {/* SALES + WHATSAPP */}
 
-      {/* LOCATIONS */}
+        <div className="premium-sales-grid">
 
-      <div className="premium-location-grid">
-        {locations.map(item => (
-          <article key={item.number}>
+          {salesGroups.map((group) => (
+
+            <article
+              className="premium-sales-card"
+              key={group.number}
+            >
+
+              <span className="contact-card-number">
+                {group.number}
+              </span>
+
+              <p className="contact-card-label">
+                {group.label}
+              </p>
+
+              <div className="premium-phone-list">
+
+                {group.phones.map((phone) => (
+
+                  <div
+                    className="premium-phone-row"
+                    key={phone}
+                  >
+
+                    <a
+                      href={`tel:${phone}`}
+                      className="premium-phone-number"
+                    >
+                      {phone}
+                    </a>
+
+                    <a
+                      href={whatsappLink(phone)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="contact-whatsapp-button"
+                    >
+                      WHATSAPP ↗
+                    </a>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            </article>
+
+          ))}
+
+        </div>
+
+
+        {/* EMAILS */}
+
+        <article className="premium-email-card">
+
+          <div>
+
             <span className="contact-card-number">
-              {item.number}
+              06
             </span>
 
             <p className="contact-card-label">
-              {item.label}
+              {ar
+                ? 'البريد الإلكتروني'
+                : 'EMAIL CONTACTS'}
             </p>
 
             <h2>
-              {item.title}
+              {ar
+                ? 'تواصل مباشرة مع القسم المناسب.'
+                : 'Reach the right team directly.'}
             </h2>
 
-            <a
-              href={item.href}
-              target="_blank"
-              rel="noreferrer"
-              className="contact-action-button"
-            >
-              {ar
-                ? 'فتح الموقع'
-                : 'OPEN LOCATION'}{' '}
-              ↗
-            </a>
-          </article>
-        ))}
-      </div>
+          </div>
 
 
-      {/* SALES + WHATSAPP */}
+          <div className="premium-email-list">
 
-      <div className="premium-sales-grid">
-        {salesGroups.map(group => (
-          <article
-            className="premium-sales-card"
-            key={group.number}
-          >
-            <span className="contact-card-number">
-              {group.number}
-            </span>
+            <div className="premium-email-row">
 
-            <p className="contact-card-label">
-              {group.label}
-            </p>
+              <span>
+                SALES
+              </span>
 
-            <div className="premium-phone-list">
-              {group.phones.map(phone => (
-                <div
-                  className="premium-phone-row"
-                  key={phone}
-                >
-                  <a
-                    href={`tel:${phone}`}
-                    className="premium-phone-number"
-                  >
-                    {phone}
-                  </a>
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=sales@kirmary.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                sales@kirmary.com ↗
+              </a>
 
-                  <a
-                    href={whatsappLink(phone)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="contact-whatsapp-button"
-                  >
-                    WHATSAPP ↗
-                  </a>
-                </div>
-              ))}
             </div>
-          </article>
-        ))}
-      </div>
 
 
-      {/* EMAILS */}
+            <div className="premium-email-row">
 
-      <article className="premium-email-card">
-        <div>
+              <span>
+                INFO
+              </span>
+
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=info@kirmary.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                info@kirmary.com ↗
+              </a>
+
+            </div>
+
+
+            <div className="premium-email-row">
+
+              <span>
+                KIRMARY
+              </span>
+
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=kirmary@kirmary.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                kirmary@kirmary.com ↗
+              </a>
+
+            </div>
+
+
+            <div className="premium-email-row">
+
+              <span>
+                ENG. WAEL
+              </span>
+
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=Eng.wael@kirmary.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Eng.wael@kirmary.com ↗
+              </a>
+
+            </div>
+
+          </div>
+
+        </article>
+
+
+        {/* RFQ */}
+
+        <article className="premium-contact-rfq">
+
           <span className="contact-card-number">
-            06
+            07
           </span>
 
           <p className="contact-card-label">
-            {ar
-              ? 'البريد الإلكتروني'
-              : 'EMAIL CONTACTS'}
+            RFQ
           </p>
 
           <h2>
             {ar
-              ? 'تواصل مباشرة مع القسم المناسب.'
-              : 'Reach the right team directly.'}
+              ? 'أرسل متطلبات المشروع والكميات المطلوبة.'
+              : 'Send your project requirements and required quantities.'}
           </h2>
-        </div>
-<div className="premium-email-list">
 
-  <div className="premium-email-row">
-    <span>SALES</span>
+          <Link
+            href={`/${locale}/request-a-quote`}
+            className="contact-action-button"
+          >
+            {ar
+              ? 'طلب عرض سعر'
+              : 'REQUEST A QUOTATION'} ↗
+          </Link>
 
-    <a
-      href="https://mail.google.com/mail/?view=cm&fs=1&to=sales@kirmary.com"
-      target="_blank"
-      rel="noreferrer"
-    >
-      sales@kirmary.com ↗
-    </a>
-  </div>
+        </article>
 
-  <div className="premium-email-row">
-    <span>INFO</span>
+      </div>
 
-    <a
-      href="https://mail.google.com/mail/?view=cm&fs=1&to=info@kirmary.com"
-      target="_blank"
-      rel="noreferrer"
-    >
-      info@kirmary.com ↗
-    </a>
-  </div>
-
-  <div className="premium-email-row">
-    <span>KIRMARY</span>
-
-    <a
-      href="https://mail.google.com/mail/?view=cm&fs=1&to=kirmary@kirmary.com"
-      target="_blank"
-      rel="noreferrer"
-    >
-      kirmary@kirmary.com ↗
-    </a>
-  </div>
-
-  <div className="premium-email-row">
-    <span>ENG. WAEL</span>
-
-    <a
-      href="https://mail.google.com/mail/?view=cm&fs=1&to=Eng.wael@kirmary.com"
-      target="_blank"
-      rel="noreferrer"
-    >
-      Eng.wael@kirmary.com ↗
-    </a>
-  </div>
-
-</div>
-       
-      
-
-         
-      </article>
-
-
-      {/* RFQ */}
-
-      <article className="premium-contact-rfq">
-        <span className="contact-card-number">
-          07
-        </span>
-
-        <p className="contact-card-label">
-          RFQ
-        </p>
-
-        <h2>
-          {ar
-            ? 'أرسل متطلبات المشروع والكميات المطلوبة.'
-            : 'Send your project requirements and required quantities.'}
-        </h2>
-
-        <Link
-          href={`/${locale}/request-a-quote`}
-          className="contact-action-button"
-        >
-          {ar
-            ? 'طلب عرض سعر'
-            : 'REQUEST A QUOTATION'}{' '}
-          ↗
-        </Link>
-      </article>
     </Shell>
   );
 }
-
   /* ==================================================
      REQUEST A QUOTE
   ================================================== */

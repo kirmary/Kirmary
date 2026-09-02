@@ -1,0 +1,8 @@
+KIRMARY BRAND COLORS
+
+Primary Blue: #2D3389
+Primary Red:  #D12129
+Black:        #000000
+White:        #FFFFFF
+
+These values were sampled from the original high-resolution KIRMARY logo file.

@@ -1,0 +1,27 @@
+{
+  "name": "kirmary-orbital-website",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@firecms/neat": "^1.0.2",
+    "next": "15.1.6",
+    "nodemailer": "^9.0.5",
+    "pdfjs-dist": "^6.2.108",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "resend": "^6.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/nodemailer": "^8.0.1",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "typescript": "5.7.2"
+  }
+}

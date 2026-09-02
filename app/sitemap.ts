@@ -1,0 +1,1 @@
+export default function sitemap(){return ['en','ar'].flatMap(locale=>['','about','products','brands','projects','approvals','gallery','technical-library','request-a-quote','contact'].map(page=>({url:`https://kirmary.com/${locale}${page?'/'+page:''}`,lastModified:new Date()})))}

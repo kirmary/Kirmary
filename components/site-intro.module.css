@@ -1,0 +1,466 @@
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  overflow: hidden;
+  background: #01040c;
+  isolation: isolate;
+}
+
+.darkness {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(8, 18, 38, 0.2) 0%, transparent 35%),
+    linear-gradient(180deg, #01040c 0%, #020816 100%);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  perspective: 1200px;
+  overflow: hidden;
+}
+
+.hall {
+  position: absolute;
+  inset: -6%;
+  transform-style: preserve-3d;
+  animation: cameraPush 5.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.surface {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  background-repeat: repeat;
+}
+
+/* FLOOR */
+
+.floor {
+  width: 200vw;
+  height: 180vh;
+  transform:
+    translate3d(-50%, 14%, -220px)
+    rotateX(82deg);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(28, 85, 180, 0.12) 10%,
+      transparent 18%,
+      transparent 82%,
+      rgba(211, 33, 41, 0.12) 90%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02) 0 1px,
+      transparent 1px 42px
+    ),
+    linear-gradient(
+      180deg,
+      #030816 0%,
+      #020610 100%
+    );
+
+  box-shadow:
+    inset 0 40px 80px rgba(255, 255, 255, 0.02),
+    inset 0 -120px 180px rgba(0, 0, 0, 0.55);
+
+  animation: floorMove 1.15s linear infinite;
+}
+
+/* CEILING */
+
+.ceiling {
+  width: 200vw;
+  height: 160vh;
+  transform:
+    translate3d(-50%, -114%, -220px)
+    rotateX(-82deg);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(28, 85, 180, 0.08) 12%,
+      transparent 22%,
+      transparent 78%,
+      rgba(211, 33, 41, 0.08) 88%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      transparent 1px 54px
+    ),
+    linear-gradient(
+      180deg,
+      #020611 0%,
+      #01040c 100%
+    );
+
+  animation: ceilingMove 1.5s linear infinite;
+}
+
+/* LEFT WALL */
+
+.wallLeft {
+  width: 200vh;
+  height: 170vh;
+  transform:
+    translate3d(-126%, -50%, -180px)
+    rotateY(82deg);
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(44, 109, 214, 0.35) 18%,
+      rgba(20, 62, 132, 0.18) 45%,
+      rgba(8, 18, 40, 0.92) 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.03) 0 2px,
+      transparent 2px 58px
+    );
+
+  box-shadow:
+    inset -45px 0 55px rgba(72, 130, 227, 0.28),
+    inset -4px 0 0 rgba(132, 180, 255, 0.42);
+
+  animation: wallMove 1.35s linear infinite;
+}
+
+/* RIGHT WALL */
+
+.wallRight {
+  width: 200vh;
+  height: 170vh;
+  transform:
+    translate3d(26%, -50%, -180px)
+    rotateY(-82deg);
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(223, 42, 60, 0.34) 18%,
+      rgba(149, 25, 39, 0.18) 45%,
+      rgba(25, 7, 10, 0.94) 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.028) 0 2px,
+      transparent 2px 58px
+    );
+
+  box-shadow:
+    inset 45px 0 55px rgba(255, 78, 97, 0.22),
+    inset 4px 0 0 rgba(255, 164, 174, 0.34);
+
+  animation: wallMove 1.35s linear infinite reverse;
+}
+
+/* ATMOSPHERE */
+
+.centerFog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54vw;
+  height: 54vw;
+  min-width: 300px;
+  min-height: 300px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(44, 101, 194, 0.06) 28%,
+      rgba(210, 33, 41, 0.04) 45%,
+      transparent 70%
+    );
+  filter: blur(20px);
+  animation: fogPulse 2.4s ease-in-out infinite;
+}
+
+.endGlow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(88, 146, 241, 0.14) 28%,
+      rgba(217, 45, 58, 0.12) 48%,
+      transparent 72%
+    );
+  filter: blur(16px);
+}
+
+/* LOGO */
+
+.logoWrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(760px, 64vw);
+  transform: translate(-50%, -50%) scale(0.12);
+  opacity: 0;
+  filter: blur(12px);
+  animation: logoAppear 1.25s cubic-bezier(0.16, 1, 0.3, 1) 2.15s forwards;
+}
+
+.logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 22px rgba(73, 131, 225, 0.18))
+    drop-shadow(0 0 28px rgba(215, 37, 51, 0.14));
+  user-select: none;
+}
+
+/* OVERLAYS */
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at center,
+      transparent 0%,
+      transparent 44%,
+      rgba(0, 0, 0, 0.24) 68%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+  pointer-events: none;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* PHASE 2 */
+
+.enterLogo .logoWrap {
+  animation: logoEnter 1.55s cubic-bezier(0.78, 0, 0.22, 1) forwards;
+}
+
+.enterLogo .flash {
+  animation: flashBurst 1.55s ease forwards;
+}
+
+/* KEYFRAMES */
+
+@keyframes cameraPush {
+  0% {
+    transform: translateZ(-160px) scale(1.12);
+  }
+
+  100% {
+    transform: translateZ(240px) scale(1);
+  }
+}
+
+@keyframes floorMove {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+
+  to {
+    background-position:
+      0 0,
+      0 42px,
+      0 0;
+  }
+}
+
+@keyframes ceilingMove {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+
+  to {
+    background-position:
+      0 0,
+      0 54px,
+      0 0;
+  }
+}
+
+@keyframes wallMove {
+  from {
+    background-position:
+      0 0,
+      0 0;
+  }
+
+  to {
+    background-position:
+      0 0,
+      0 58px;
+  }
+}
+
+@keyframes fogPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0.75;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes logoAppear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.08);
+    filter: blur(16px);
+  }
+
+  55% {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.72);
+    filter: blur(0);
+  }
+}
+
+@keyframes logoEnter {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.72);
+    filter: blur(0) brightness(1);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.9);
+    filter: blur(0) brightness(1.05);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(5.4);
+    filter: blur(1px) brightness(1.14);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(16);
+    filter: blur(10px) brightness(1.35);
+  }
+}
+
+@keyframes flashBurst {
+  0%,
+  38% {
+    opacity: 0;
+  }
+
+  68% {
+    opacity: 0.18;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 900px) {
+  .logoWrap {
+    width: 78vw;
+  }
+
+  .endGlow {
+    width: 180px;
+    height: 180px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hall {
+    inset: -18%;
+  }
+
+  .logoWrap {
+    width: 84vw;
+    animation: logoAppearMobile 1.2s cubic-bezier(0.16, 1, 0.3, 1) 2.15s forwards;
+  }
+
+  .enterLogo .logoWrap {
+    animation: logoEnterMobile 1.45s cubic-bezier(0.78, 0, 0.22, 1) forwards;
+  }
+
+  .floor {
+    height: 210vh;
+  }
+
+  .ceiling {
+    height: 180vh;
+  }
+}
+
+@keyframes logoAppearMobile {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.06);
+    filter: blur(14px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.9);
+    filter: blur(0);
+  }
+}
+
+@keyframes logoEnterMobile {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.9);
+    filter: blur(0);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(4.5);
+    filter: blur(1px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(12);
+    filter: blur(8px);
+  }
+}

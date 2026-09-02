@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@firecms/neat": "^1.0.2",
-    "next": "15.1.6",
+    "next": "^16.3.4",
     "nodemailer": "^9.0.5",
     "pdfjs-dist": "^6.2.108",
     "react": "19.0.0",

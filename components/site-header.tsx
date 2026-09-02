@@ -309,7 +309,7 @@ export function SiteHeader({
         {
           id: 'Gallery',
           label: labels.Gallery,
-          href: `/${locale}/Gallery`,
+          href: `/${locale}/gallery`,
           icon: <CertificationIcon />
         },
         {

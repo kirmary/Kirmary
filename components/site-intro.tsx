@@ -1,6 +1,7 @@
+
 'use client';
 
-import {useEffect, useRef, useState} from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type IntroPhase = 'playing' | 'leaving' | 'done';
 
@@ -47,24 +48,32 @@ export function SiteIntro() {
       );
     };
 
+    const handleCanPlay = () => {
+      if (!video) return;
+
+      void video.play().catch(() => {
+        // Browser can still delay autoplay.
+        // The fallback timer will close the intro.
+      });
+    };
+
     video?.addEventListener(
       'ended',
       handleEnded
     );
 
-    const playVideo = async () => {
-      try {
-        await video?.play();
-      } catch {
-        /*
-          Muted inline video normally autoplays.
-          The fallback timer still opens the website
-          if the browser delays playback.
-        */
-      }
-    };
+    video?.addEventListener(
+      'canplay',
+      handleCanPlay
+    );
 
-    void playVideo();
+    if (video) {
+      video.load();
+
+      void video.play().catch(() => {
+        // Wait for canplay event.
+      });
+    }
 
     return () => {
       window.clearTimeout(fallbackTimer);
@@ -73,6 +82,11 @@ export function SiteIntro() {
       video?.removeEventListener(
         'ended',
         handleEnded
+      );
+
+      video?.removeEventListener(
+        'canplay',
+        handleCanPlay
       );
 
       root.classList.remove('intro-running');
@@ -191,4 +205,5 @@ export function SiteIntro() {
   );
 }
 
-export default SiteIntro; 
+export default SiteIntro;
+

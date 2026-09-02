@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -16,18 +17,12 @@ export default function IntroOnce() {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      sessionStorage.setItem(
-        INTRO_STORAGE_KEY,
-        'true'
-      );
+    setShowIntro(true);
 
-      setShowIntro(true);
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
+    sessionStorage.setItem(
+      INTRO_STORAGE_KEY,
+      'true'
+    );
   }, []);
 
   if (!showIntro) {
@@ -36,3 +31,4 @@ export default function IntroOnce() {
 
   return <SiteIntro />;
 }
+

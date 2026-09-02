@@ -337,7 +337,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'valmatic-air-vent') {
     return [
       {
-        src: '/technical/valmatic-air-vent-submittal.pdf',
+        src: '/Technical/valmatic-air-vent-submittal.pdf',
         title: 'VALMATIC Automatic Air Vent Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -346,7 +346,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'potter') {
     return [
       {
-        src: '/technical/potter-submittal.pdf',
+        src: '/Technical/potter-submittal.pdf',
         title: 'POTTER Fire Sprinkler Monitoring Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -356,7 +356,7 @@ function productDocuments(productId: string): ProductDocument[] {
  if (productId === 'victaulic-machines') {
   return [
     {
-      src: '/technical/tuwei-machines-catalogue.pdf',
+      src: '/Technical/tuwei-machines-catalogue.pdf',
       title: 'VICTAULIC-TUWEI Pipe Machinery Catalogue',
       category: 'TECHNICAL SUBMITTAL'
     }
@@ -366,7 +366,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'erico') {
     return [
       {
-        src: '/technical/erico-hangers-submittal.pdf',
+        src: '/Technical/erico-hangers-submittal.pdf',
         title: 'ERICO Hangers Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -376,7 +376,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'zurn-drains') {
     return [
       {
-        src: '/technical/zurn-drains-submittal.pdf',
+        src: '/Technical/zurn-drains-submittal.pdf',
         title: 'KIRMARY - ZURN Drains Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -386,12 +386,12 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'lede-valves') {
     return [
       {
-        src: '/technical/lede-fire-valves-catalogue.pdf',
+        src: '/Technical/lede-fire-valves-catalogue.pdf',
         title: 'LEDE Fire Valves Catalogue',
         category: 'PRODUCT CATALOGUE'
       },
       {
-        src: '/technical/lede-fire-valves-submittal.pdf',
+        src: '/Technical/lede-fire-valves-submittal.pdf',
         title: 'LEDE Valves for Fire Fighting Works',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -401,12 +401,12 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'lede-grooved-fittings') {
     return [
       {
-        src: '/technical/lede-grooved-catalogue-up-to-24.pdf',
+        src: '/Technical/lede-grooved-catalogue-up-to-24.pdf',
         title: 'LEDE Grooved Catalogue - Up to 24 Inch',
         category: 'PRODUCT CATALOGUE'
       },
       {
-        src: '/technical/lede-grooved-submittal-approvals.pdf',
+        src: '/Technical/lede-grooved-submittal-approvals.pdf',
         title: 'LEDE Grooved Fittings Submittal & Approvals',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -416,7 +416,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'viking-sprinklers') {
     return [
       {
-        src: '/technical/viking-sprinklers-submittal.pdf',
+        src: '/Technical/viking-sprinklers-submittal.pdf',
         title: 'VIKING Sprinklers Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -426,7 +426,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'tiger-steel-pipes') {
     return [
       {
-        src: '/technical/tiger-steel-erw-pipes-submittal.pdf',
+        src: '/Technical/tiger-steel-erw-pipes-submittal.pdf',
         title: 'TIGER Steel ERW Pipes Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -436,7 +436,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'fire-cabinets') {
     return [
       {
-        src: '/technical/kirmary-fire-cabinets-submittal.pdf',
+        src: '/Technical/kirmary-fire-cabinets-submittal.pdf',
         title: 'KIRMARY Fire Hose Cabinets Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -446,12 +446,12 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'lede-plumbing-hvac-valves') {
     return [
       {
-        src: '/technical/lede-water-valves-catalogue.pdf',
+        src: '/Technical/lede-water-valves-catalogue.pdf',
         title: 'LEDE Water Valves Catalogue',
         category: 'PRODUCT CATALOGUE'
       },
       {
-        src: '/technical/lede-plumbing-hvac-submittal.pdf',
+        src: '/Technical/lede-plumbing-hvac-submittal.pdf',
         title: 'LEDE Valves - Plumbing, Water Supply & HVAC',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -461,7 +461,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'fire-hydrant') {
     return [
       {
-        src: '/technical/km-fire-hydrant-submittal.pdf',
+        src: '/Technical/km-fire-hydrant-submittal.pdf',
         title: 'KIRMARY Dry Fire Hydrant Technical Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -471,7 +471,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'bristol-fire-pumps') {
     return [
       {
-        src: '/technical/bristol-fire-pumps-submittal.pdf',
+        src: '/Technical/bristol-fire-pumps-submittal.pdf',
         title: 'BRISTOL Fire Pumps Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -481,12 +481,12 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'spp-fire-pumps') {
     return [
       {
-        src: '/technical/spp-fire-pumps-brochure.pdf',
+        src: '/Technical/spp-fire-pumps-brochure.pdf',
         title: 'SPP Fire Pumps & Systems Brochure',
         category: 'PRODUCT BROCHURE'
       },
       {
-        src: '/technical/spp-fire-pumps-submittal.pdf',
+        src: '/Technical/spp-fire-pumps-submittal.pdf',
         title: 'SPP Fire Pumps Submittal - USA - FM & UL',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -496,12 +496,12 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'mech-threaded-fittings') {
     return [
       {
-        src: '/technical/mech-ductile-cast-iron-pipe-fittings.pdf',
+        src: '/Technical/mech-ductile-cast-iron-pipe-fittings.pdf',
         title: 'MECH Ductile & Cast Iron Pipe Fittings',
         category: 'PRODUCT CATALOGUE'
       },
       {
-        src: '/technical/mech-threaded-fittings-300di-submittal.pdf',
+        src: '/Technical/mech-threaded-fittings-300di-submittal.pdf',
         title: 'MECH Threaded Fittings 300DI',
         category: 'TECHNICAL SUBMITTAL'
       }
@@ -536,7 +536,7 @@ function productDocuments(productId: string): ProductDocument[] {
   if (productId === 'fire-valves') {
     return [
       {
-        src: '/technical/kirmary-valves-submittal.pdf',
+        src: '/Technical/kirmary-valves-submittal.pdf',
         title: 'KIRMARY Valves Technical Submittal',
         category: 'TECHNICAL SUBMITTAL'
       }

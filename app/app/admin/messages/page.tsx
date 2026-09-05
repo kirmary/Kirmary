@@ -1,10 +1,11 @@
-﻿import { requireAdmin } from "../../../lib/admin-auth"
 import { db } from "../../../lib/db"
+import { requireAdmin } from "../../../lib/admin-auth"
 import { StatusSelect } from "../../../components/admin/status-select"
 import styles from "../../../components/admin/admin.module.css"
 
 export default async function MessagesPage() {
   await requireAdmin()
+
   const rows = await db.message.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
@@ -50,4 +51,3 @@ export default async function MessagesPage() {
     </>
   )
 }
-

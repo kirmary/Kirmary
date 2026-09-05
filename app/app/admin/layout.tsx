@@ -1,20 +1,25 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import { isAdmin } from "../../lib/admin-auth"
 import { logout } from "./actions"
 import styles from "../../components/admin/admin.module.css"
 
 export const metadata = { title: "Dashboard | KIRMARY" }
 
-// كل صفحة تحت /admin بتمر من هنا الأول.
-// isAdmin بترجّع أي حد مش مسجّل لصفحة الدخول.
-// صفحة /admin/login عندها layout خاص بيها عشان تتخطى الحماية دي.
+// ملاحظة مهمة:
+// في Next.js الـ layout الداخلي مابيلغيش الـ layout الأب — بيتدمج جواه.
+// فلو حطينا redirect هنا، صفحة /admin/login نفسها هتمر منه وتحوّل لنفسها للأبد.
+// الحل: الـ layout بيرسم الشكل بس (مفيش تحويل)، وكل صفحة محمية
+// بتنادي requireAdmin() في أول سطر عندها.
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  if (!(await isAdmin())) return children
+  const signedIn = await isAdmin()
+
+  // صفحة الدخول: مفيش قائمة جانبية، الفورم لوحده في نص الشاشة
+  if (!signedIn) return <>{children}</>
 
   return (
     <div className={styles.shell}>
@@ -41,4 +46,3 @@ export default async function AdminLayout({
     </div>
   )
 }
-

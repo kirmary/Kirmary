@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   useState,
@@ -206,86 +206,54 @@ export function RfqForm() {
 
   async function submit() {
     if (!data.products?.trim()) {
-      setResult(
-        'Please enter the required products.'
-      );
-
+      setResult('Please enter the required products.');
       return;
     }
-
-
-    const salesKey =
-      process.env
-        .NEXT_PUBLIC_WEB3FORMS_SALES_KEY;
-
-    const infoKey =
-      process.env
-        .NEXT_PUBLIC_WEB3FORMS_INFO_KEY;
-
-
-    if (!salesKey || !infoKey) {
-      setResult(
-        'RFQ email service is not configured yet.'
-      );
-
-      return;
-    }
-
-
-    const reference =
-      createReference();
-
 
     setSending(true);
-
-    setResult(
-      'Sending your quotation request…'
-    );
-
+    setResult('Sending your quotation request...');
 
     try {
-      /*
-        SAME RFQ IS SENT TWICE:
+      const locale =
+        typeof window !== 'undefined' &&
+        window.location.pathname.startsWith('/ar')
+          ? 'ar'
+          : 'en';
 
-        1. Sales form
-        2. Info form
+      const response = await fetch('/api/rfq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, locale })
+      });
 
-        Both receive the SAME reference number.
-      */
+      const json = await response.json();
 
-      await Promise.all([
-        sendToWeb3Forms(
-          salesKey,
-          reference
-        ),
+      if (!response.ok || !json.ok) {
+        const detail = json.errors
+          ? Object.values(json.errors).join(' ')
+          : '';
 
-        sendToWeb3Forms(
-          infoKey,
-          reference
-        )
-      ]);
+        setResult(
+          (json.message ||
+            'The quotation request could not be sent. Please try again.') +
+            (detail ? ' ' + detail : '')
+        );
+        return;
+      }
 
-
-      setSuccessReference(reference);
-setResult('');
-setData({});
-setStep(1);
-
+      setSuccessReference(json.reference);
+      setResult('');
+      setData({});
+      setStep(1);
     } catch (error) {
-      console.error(
-        'KIRMARY RFQ ERROR:',
-        error
-      );
-
+      console.error('KIRMARY RFQ ERROR:', error);
       setResult(
         'The quotation request could not be sent. Please try again.'
       );
-
     } finally {
       setSending(false);
     }
   }
-
 
   /* ==================================================
      SUCCESS ENDING
@@ -551,3 +519,4 @@ setStep(1);
     </div>
   );
 }
+

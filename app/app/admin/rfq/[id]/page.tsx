@@ -1,5 +1,5 @@
-﻿import { requireAdmin } from "../../../../lib/admin-auth"
 import Link from "next/link"
+import { requireAdmin } from "../../../../lib/admin-auth"
 import { notFound } from "next/navigation"
 import { db } from "../../../../lib/db"
 import { StatusSelect } from "../../../../components/admin/status-select"
@@ -74,4 +74,3 @@ export default async function RfqDetailPage({
     </>
   )
 }
-

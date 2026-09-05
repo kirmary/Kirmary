@@ -7,11 +7,6 @@ import {
 
 type FormData = Record<string, string>;
 
-type Web3FormsResponse = {
-  success?: boolean;
-  message?: string;
-};
-
 export function RfqForm() {
   const [step, setStep] = useState(1);
 
@@ -87,116 +82,6 @@ export function RfqForm() {
     setResult('');
 
     setStep(current => current + 1);
-  }
-
-
-  /* ==================================================
-     REFERENCE NUMBER
-  ================================================== */
-
-  function createReference() {
-    const date = new Date();
-
-    const datePart = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0')
-    ].join('');
-
-    const randomPart =
-      Math.random()
-        .toString(36)
-        .slice(2, 7)
-        .toUpperCase();
-
-    return `RFQ-${datePart}-${randomPart}`;
-  }
-
-
-  /* ==================================================
-     SEND ONE WEB3FORMS REQUEST
-  ================================================== */
-
-  async function sendToWeb3Forms(
-    accessKey: string,
-    reference: string
-  ) {
-    const response = await fetch(
-      'https://api.web3forms.com/submit',
-      {
-        method: 'POST',
-
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-
-        body: JSON.stringify({
-          access_key: accessKey,
-
-          subject:
-            `New KIRMARY RFQ Request — ${reference}`,
-
-          from_name:
-            'KIRMARY Website RFQ',
-
-          /*
-            IMPORTANT:
-            Web3Forms uses "email" as Reply-To.
-            So Reply goes directly to the customer.
-          */
-
-          email:
-            data.workEmail?.trim(),
-
-          'RFQ Reference':
-            reference,
-
-          'Full Name':
-            data.fullName?.trim(),
-
-          'Work Email':
-            data.workEmail?.trim(),
-
-          'Phone / WhatsApp':
-            data.phone?.trim(),
-
-          'Company Name':
-            data.companyName?.trim() ||
-            'Not provided',
-
-          'Project Name':
-            data.projectName?.trim(),
-
-          'Project Location':
-            data.projectLocation?.trim() ||
-            'Not provided',
-
-          'Required Products':
-            data.products?.trim(),
-
-          'Required Quantities':
-            data.quantities?.trim() ||
-            'Not provided',
-
-          'Technical Requirements / Notes':
-            data.technicalRequirements?.trim() ||
-            'Not provided'
-        })
-      }
-    );
-
-    const json =
-      (await response.json()) as Web3FormsResponse;
-
-    if (!response.ok || !json.success) {
-      throw new Error(
-        json.message ||
-        'Web3Forms submission failed.'
-      );
-    }
-
-    return json;
   }
 
 
@@ -519,4 +404,5 @@ export function RfqForm() {
     </div>
   );
 }
+
 

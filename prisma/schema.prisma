@@ -1,0 +1,61 @@
+// قاعدة البيانات: موديلين بس. مفيش تعقيد.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// مراحل متابعة طلب عرض السعر
+enum RfqStatus {
+  NEW        // جديد
+  IN_REVIEW  // بنراجعه
+  QUOTED     // بعتنا العرض
+  WON        // كسبناه
+  LOST       // اتلغى
+}
+
+enum MessageStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+// نفس حقول فورم الـ RFQ الموجود عندك بالظبط
+model Rfq {
+  id                    String    @id @default(cuid())
+  reference             String    @unique   // RFQ-20260904-A7B3X
+  fullName              String
+  workEmail             String
+  phone                 String
+  companyName           String?
+  projectName           String
+  projectLocation       String?
+  products              String
+  quantities            String?
+  technicalRequirements String?
+  locale                String    @default("en")
+  status                RfqStatus @default(NEW)
+  note                  String?   // ملاحظاتك الداخلية
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  locale    String        @default("en")
+  status    MessageStatus @default(NEW)
+  createdAt DateTime      @default(now())
+
+  @@index([status, createdAt])
+}

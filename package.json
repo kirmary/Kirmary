@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@firecms/neat": "^1.0.2",
+    "@prisma/client": "^6.19.3",
     "next": "^16.3.4",
     "nodemailer": "^9.0.5",
     "pdfjs-dist": "^6.2.108",
@@ -22,6 +23,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
+    "prisma": "^6.19.3",
     "typescript": "5.7.2"
   }
 }

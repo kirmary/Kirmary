@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -10,25 +9,31 @@ export default function IntroOnce() {
   const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
-    const introAlreadyPlayed =
-      sessionStorage.getItem(INTRO_STORAGE_KEY);
+    const introAlreadyPlayed = sessionStorage.getItem(
+      INTRO_STORAGE_KEY
+    );
 
-    if (introAlreadyPlayed === 'true') {
-      return;
+    if (introAlreadyPlayed !== 'true') {
+      setShowIntro(true);
     }
+  }, []);
 
-    setShowIntro(true);
-
+  const handleIntroComplete = () => {
     sessionStorage.setItem(
       INTRO_STORAGE_KEY,
       'true'
     );
-  }, []);
+
+    setShowIntro(false);
+  };
 
   if (!showIntro) {
     return null;
   }
 
-  return <SiteIntro />;
+  return (
+    <SiteIntro
+      onComplete={handleIntroComplete}
+    />
+  );
 }
-

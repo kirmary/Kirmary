@@ -182,6 +182,24 @@ export async function hideProduct(formData: FormData) {
   revalidateProductPages(slug)
   redirect("/admin/products")
 }
+export async function showProduct(formData: FormData) {
+  await guard()
+
+  const id = String(formData.get("id") ?? "").trim()
+  const slug = String(formData.get("slug") ?? "").trim()
+
+  if (!id || !slug) return
+
+  const result = await db.product.updateMany({
+    where: { id, slug, visible: false },
+    data: { visible: true },
+  })
+
+  if (!result.count) return
+
+  revalidateProductPages(slug)
+  redirect("/admin/products")
+}
 export async function updateProduct(formData: FormData) {
   await guard()
 
@@ -315,6 +333,24 @@ export async function deleteProject(formData: FormData) {
 
   const result = await db.project.deleteMany({
     where: { id, slug },
+  })
+
+  if (!result.count) return
+
+  revalidateProjectPages()
+  redirect("/admin/projects")
+}
+export async function showProject(formData: FormData) {
+  await guard()
+
+  const id = String(formData.get("id") ?? "").trim()
+  const slug = String(formData.get("slug") ?? "").trim()
+
+  if (!id || !slug) return
+
+  const result = await db.project.updateMany({
+    where: { id, slug, visible: false },
+    data: { visible: true },
   })
 
   if (!result.count) return

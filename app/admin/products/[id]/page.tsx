@@ -1,6 +1,12 @@
+
 import Link from "next/link"
 import { db } from "../../../../lib/db"
-import { deleteProduct, hideProduct, updateProduct } from "../../actions"
+import {
+  deleteProduct,
+  hideProduct,
+  showProduct,
+  updateProduct,
+} from "../../actions"
 import { requireAdmin } from "../../../../lib/admin-auth"
 
 export default async function EditProductPage({
@@ -40,17 +46,17 @@ export default async function EditProductPage({
         </p>
       </div>
 
-    <form
-  action={updateProduct}
-  style={{
-    display: "grid",
-    gap: "20px",
-  }}
->
-  <input type="hidden" name="id" value={product.id} />
+      <form
+        action={updateProduct}
+        style={{
+          display: "grid",
+          gap: "20px",
+        }}
+      >
+        <input type="hidden" name="id" value={product.id} />
 
-  <div>
-    <label htmlFor="number">Product Number</label>
+        <div>
+          <label htmlFor="number">Product Number</label>
           <input
             id="number"
             name="number"
@@ -243,7 +249,28 @@ export default async function EditProductPage({
             Hide from website
           </button>
         </form>
-      ) : null}
+      ) : (
+        <form
+          action={showProduct}
+          style={{ marginTop: "28px" }}
+        >
+          <input type="hidden" name="id" value={product.id} />
+          <input type="hidden" name="slug" value={product.slug} />
+          <button
+            type="submit"
+            style={{
+              padding: "10px 16px",
+              border: "1px solid #1a7a1a",
+              borderRadius: "8px",
+              background: "#fff",
+              color: "#1a7a1a",
+              cursor: "pointer",
+            }}
+          >
+            Show on website
+          </button>
+        </form>
+      )}
 
       <form
         action={deleteProduct}
@@ -255,9 +282,12 @@ export default async function EditProductPage({
       >
         <input type="hidden" name="id" value={product.id} />
         <input type="hidden" name="slug" value={product.slug} />
+
         <label htmlFor="confirmation">
-          Permanently delete this product — type <strong>{product.slug}</strong> to confirm
+          Permanently delete this product — type{" "}
+          <strong>{product.slug}</strong> to confirm
         </label>
+
         <input
           id="confirmation"
           name="confirmation"
@@ -265,6 +295,7 @@ export default async function EditProductPage({
           autoComplete="off"
           style={inputStyle}
         />
+
         <button
           type="submit"
           style={{
@@ -294,3 +325,4 @@ const inputStyle = {
   fontSize: "15px",
   boxSizing: "border-box" as const,
 }
+

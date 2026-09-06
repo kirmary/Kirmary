@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import {Reveal} from './reveal';
-import {ProductShowcase} from './product-showcase';
-import {ownedProducts,projects} from '../lib/site-content';
+
+import { Reveal } from './reveal';
+
+import { ProductShowcase } from './product-showcase';
 
 function SectionHead({
   index,
@@ -32,10 +33,34 @@ function SectionHead({
   );
 }
 
+type WebsiteProduct = {
+  id: string;
+  number: string;
+  name: string;
+  ar: string;
+  description: string;
+  descriptionAr: string;
+  image: string | null;
+  tags: string[];
+};
+
+type WebsiteProject = {
+  id: string;
+  name: string;
+  nameAr: string;
+  image: string;
+  subtitle: string | null;
+  sortOrder: number;
+};
+
 export function HomeSections({
-  locale
+  locale,
+  products,
+  projects
 }: {
   locale: string;
+  products: WebsiteProduct[];
+  projects: WebsiteProject[];
 }) {
   const ar = locale === 'ar';
 
@@ -78,9 +103,9 @@ export function HomeSections({
       </section>
 
       <ProductShowcase
-        locale={locale}
-        products={ownedProducts}
-      />
+  locale={locale}
+  products={products}
+/>
 
       <section
         id="projects"
@@ -99,39 +124,33 @@ export function HomeSections({
         </Reveal>
 
         <div className="project-grid">
-          {projects.map((project, i) => {
-            const isNewAdministrativeCapital =
-              (i >= 3 && i <= 7) ||
-              (i >= 10 && i <= 12);
-
-            return (
+          {projects.map(project => (
               <Reveal
-                key={project.name}
-                className={`project-card project-${i + 1}`}
+                key={project.id}
+                className={`project-card project-${project.sortOrder}`}
               >
                 <img
                   src={project.image}
-                  alt={ar ? project.ar : project.name}
+                  alt={ar ? project.nameAr : project.name}
                 />
 
                 <div>
                   <span>
-                    {String(i + 1).padStart(2, '0')}
+                    {String(project.sortOrder).padStart(2, '0')}
                   </span>
 
                   <h3>
-                    {ar ? project.ar : project.name}
+                    {ar ? project.nameAr : project.name}
                   </h3>
 
-                  {isNewAdministrativeCapital && (
+                  {project.subtitle && (
                     <p className="project-location">
-                      New Administrative Capital
+                      {project.subtitle}
                     </p>
                   )}
                 </div>
               </Reveal>
-            );
-          })}
+          ))}
         </div>
 
         <Link

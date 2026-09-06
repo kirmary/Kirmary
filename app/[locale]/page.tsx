@@ -2,6 +2,7 @@ import SplashCursor from '../../components/SplashCursor';
 import IntroOnce from '../../components/intro-once';
 import { OrbitalHero } from '../../components/orbital-hero';
 import { HomeSections } from '../../components/home-sections';
+import { db } from '../../lib/db';
 
 export default async function Page({
   params
@@ -10,9 +11,48 @@ export default async function Page({
 }) {
   const { locale } = await params;
 
+  const products = await db.product.findMany({
+    where: {
+      visible: true
+    },
+    orderBy: [
+      {
+        sortOrder: 'asc'
+      },
+      {
+        createdAt: 'desc'
+      }
+    ]
+  });
+
+  const projects = await db.project.findMany({
+    where: {
+      visible: true
+    },
+    orderBy: [
+      {
+        sortOrder: 'asc'
+      },
+      {
+        createdAt: 'desc'
+      }
+    ]
+  });
+
+  const websiteProducts = products.map(product => ({
+    id: product.slug,
+    number: product.number,
+    name: product.name,
+    ar: product.nameAr,
+    description: product.description,
+    descriptionAr: product.descriptionAr,
+    image: product.image,
+    tags: product.tags
+  }));
+
   return (
     <>
-     <IntroOnce />
+      <IntroOnce />
 
       <SplashCursor
         RAINBOW_MODE={false}
@@ -25,7 +65,11 @@ export default async function Page({
 
       <OrbitalHero locale={locale} />
 
-      <HomeSections locale={locale} />
+      <HomeSections
+        locale={locale}
+        products={websiteProducts}
+        projects={projects}
+      />
     </>
   );
 }

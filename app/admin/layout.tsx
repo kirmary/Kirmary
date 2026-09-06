@@ -25,10 +25,12 @@ export default async function AdminLayout({
         </div>
 
         <nav className={styles.nav}>
-          <Link href="/admin">Quotation requests</Link>
-          <Link href="/admin/messages">Messages</Link>
-          <Link href="/">View website</Link>
-        </nav>
+  <Link href="/admin">Quotation requests</Link>
+  <Link href="/admin/messages">Messages</Link>
+  <Link href="/admin/products">Products</Link>
+  <Link href="/admin/projects">Projects</Link>
+  <Link href="/">View website</Link>
+</nav>
 
         <form action={logout} className={styles.logoutForm}>
           <button type="submit" className={styles.logout}>
@@ -41,4 +43,3 @@ export default async function AdminLayout({
     </div>
   )
 }
-

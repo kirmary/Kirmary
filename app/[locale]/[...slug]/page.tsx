@@ -23,9 +23,9 @@ import {
 import {
   brands,
   contacts,
-  ownedProducts,
-  projects
+  ownedProducts
 } from '../../../lib/site-content';
+import { db } from '../../../lib/db';
 
 /* ==================================================
    TYPES
@@ -594,16 +594,19 @@ export default async function Route({
     /* PRODUCT DETAIL */
 
     if (productSlug) {
-      const product = ownedProducts.find(
-        item => item.id === productSlug
-      );
+      const product = await db.product.findFirst({
+        where: {
+          slug: productSlug,
+          visible: true
+        }
+      });
 
       if (!product) {
         return notFound();
       }
 
       const documents = productDocuments(
-        product.id
+        product.slug
       );
 
       return (
@@ -615,7 +618,7 @@ export default async function Route({
           }
           title={
             ar
-              ? product.ar
+              ? product.nameAr
               : product.name
           }
           summary={
@@ -624,24 +627,24 @@ export default async function Route({
               : 'A KIRMARY-engineered product system presented for clear specification review and direct access to technical documentation.'
           }
         >
-          <ProductCertificationProvider productId={product.id}>
+          <ProductCertificationProvider productId={product.slug}>
             <div className="product-detail-page premium-product-detail">
               <ProductDetailVisual
-                productId={product.id}
+                productId={product.slug}
                 productNumber={product.number}
                 productImage={product.image}
                 productName={
                   ar
-                    ? product.ar
+                    ? product.nameAr
                     : product.name
                 }
                 isHydrant={
-                  product.id === 'fire-hydrant'
+                  product.slug === 'fire-hydrant'
                 }
               />
 
               <div className="product-detail-copy">
-                {product.id !== 'victaulic-machines' && (
+                {product.slug !== 'victaulic-machines' && (
                   <>
                     <SectionIntro
                       label={
@@ -731,6 +734,16 @@ export default async function Route({
 
     /* PRODUCTS LISTING */
 
+    const products = await db.product.findMany({
+      where: {
+        visible: true
+      },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { createdAt: 'desc' }
+      ]
+    });
+
     return (
       <Shell
         kicker={
@@ -750,9 +763,9 @@ export default async function Route({
         }
       >
         <div className="premium-listing-grid">
-          {ownedProducts.map(product => (
+          {products.map(product => (
             <Link
-              href={`/${locale}/products/${product.id}`}
+              href={`/${locale}/products/${product.slug}`}
               key={product.id}
               className="premium-product-card"
             >
@@ -772,7 +785,7 @@ export default async function Route({
                     src={product.image}
                     alt={
                       ar
-                        ? product.ar
+                        ? product.nameAr
                         : product.name
                     }
                   />
@@ -784,7 +797,7 @@ export default async function Route({
               <div className="premium-product-card__copy">
                 <h2>
                   {ar
-                    ? product.ar
+                    ? product.nameAr
                     : product.name}
                 </h2>
 
@@ -1240,6 +1253,16 @@ const images = allImages.slice(1);
   ================================================== */
 
   if (root === 'projects') {
+    const projects = await db.project.findMany({
+      where: {
+        visible: true
+      },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { createdAt: 'desc' }
+      ]
+    });
+
     return (
       <Shell
         kicker={
@@ -1280,9 +1303,9 @@ summary={
 
         <div className="premium-project-grid">
           {projects.map(
-            (project, index) => (
+            project => (
               <article
-                key={project.name}
+                key={project.id}
                 className="premium-project-card"
               >
                 <div className="premium-project-card__image">
@@ -1290,13 +1313,13 @@ summary={
                     src={project.image}
                     alt={
                       ar
-                        ? project.ar
+                        ? project.nameAr
                         : project.name
                     }
                   />
 
                   <span>
-                    {String(index + 1).padStart(
+                    {String(project.sortOrder).padStart(
                       2,
                       '0'
                     )}
@@ -1312,11 +1335,11 @@ summary={
 
                   <h2>
                     {ar
-                      ? project.ar
+                      ? project.nameAr
                       : project.name}
                   </h2>
 
-                  {'subtitle' in project && project.subtitle ? (
+                  {project.subtitle ? (
                     <h2
                       className="premium-project-card__location"
                       style={{

@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { productEditorData, productRows, saveProductRows } from "../../lib/product-editor"
+import { validSlug } from "../../lib/local-upload"
 import { db } from "../../lib/db"
 import { checkPassword, startSession, endSession, isAdmin } from "../../lib/admin-auth"
 
-// Server Actions: كود بيتنفذ على السرفر بس، بيتنادى مباشرة من الفورم.
+// Server Actions: كود بيتنفذ على السيرفر بس، بيتنادى مباشرة من الفورم.
 // مفيش API مطلوب للوحة التحكم بسببها.
 
 const RFQ_STATUSES = ["NEW", "IN_REVIEW", "QUOTED", "WON", "LOST"] as const
@@ -35,6 +37,16 @@ function revalidateProjectPages() {
   revalidatePath("/ar/projects")
 }
 
+function revalidateGalleryPages() {
+  revalidatePath("/[locale]/[...slug]", "page")
+  revalidatePath("/admin/gallery")
+  revalidatePath("/admin/gallery/sections")
+}
+
+// =========================
+// AUTH
+// =========================
+
 export async function login(formData: FormData) {
   const password = String(formData.get("password") ?? "")
 
@@ -54,8 +66,14 @@ export async function logout() {
 // مهم: كل action بتتأكد من الصلاحية بنفسها.
 // الحماية مش معتمدة على إخفاء الزرار من الواجهة.
 async function guard() {
-  if (!(await isAdmin())) redirect("/admin/login")
+  if (!(await isAdmin())) {
+    redirect("/admin/login")
+  }
 }
+
+// =========================
+// RFQ
+// =========================
 
 export async function updateRfqStatus(formData: FormData) {
   await guard()
@@ -65,7 +83,10 @@ export async function updateRfqStatus(formData: FormData) {
 
   if (!id || !RFQ_STATUSES.includes(status)) return
 
-  await db.rfq.update({ where: { id }, data: { status } })
+  await db.rfq.update({
+    where: { id },
+    data: { status },
+  })
 
   revalidatePath("/admin")
   revalidatePath("/admin/rfq/" + id)
@@ -79,10 +100,17 @@ export async function updateRfqNote(formData: FormData) {
 
   if (!id) return
 
-  await db.rfq.update({ where: { id }, data: { note: note || null } })
+  await db.rfq.update({
+    where: { id },
+    data: { note: note || null },
+  })
 
   revalidatePath("/admin/rfq/" + id)
 }
+
+// =========================
+// MESSAGES
+// =========================
 
 export async function updateMessageStatus(formData: FormData) {
   await guard()
@@ -92,57 +120,30 @@ export async function updateMessageStatus(formData: FormData) {
 
   if (!id || !MESSAGE_STATUSES.includes(status)) return
 
-  await db.message.update({ where: { id }, data: { status } })
+  await db.message.update({
+    where: { id },
+    data: { status },
+  })
 
   revalidatePath("/admin/messages")
 }
+
+// =========================
+// PRODUCTS
+// =========================
+
 export async function createProduct(formData: FormData) {
   await guard()
-
-  const slug = String(formData.get("slug") ?? "").trim()
-  const number = String(formData.get("number") ?? "").trim()
-  const name = String(formData.get("name") ?? "").trim()
-  const nameAr = String(formData.get("nameAr") ?? "").trim()
-  const description = String(formData.get("description") ?? "").trim()
-  const descriptionAr = String(formData.get("descriptionAr") ?? "").trim()
-  const image = String(formData.get("image") ?? "").trim() || null
-  const category = String(formData.get("category") ?? "").trim() || null
-  const brand = String(formData.get("brand") ?? "").trim() || null
-  const featured = formData.get("featured") === "on"
-  const visible = formData.get("visible") !== "off"
-  const sortOrder = Number(formData.get("sortOrder") ?? 0)
-
-  const tags = String(formData.get("tags") ?? "")
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-
-  if (!slug || !number || !name || !nameAr) {
-    return
-  }
-
-  await db.product.create({
-    data: {
-      slug,
-      number,
-      name,
-      nameAr,
-      description,
-      descriptionAr,
-      image,
-      tags,
-      category,
-      brand,
-      featured,
-      visible,
-      sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
-    },
+  const data=productEditorData(formData); const rows=productRows(formData)
+  await db.$transaction(async tx => {
+    if (await tx.productAlias.findUnique({where:{slug:data.slug}})) throw new Error('This slug is already used by an existing product URL.')
+    const product=await tx.product.create({data:{...data,contentManaged:true}})
+    await saveProductRows(tx,product.id,rows)
   })
-
-  revalidateProductPages(slug)
-
-  redirect("/admin/products")
+  revalidateProductPages(data.slug)
+  redirect('/admin/products')
 }
+
 export async function deleteProduct(formData: FormData) {
   await guard()
 
@@ -150,7 +151,6 @@ export async function deleteProduct(formData: FormData) {
   const slug = String(formData.get("slug") ?? "").trim()
   const confirmation = String(formData.get("confirmation") ?? "").trim()
 
-  // Deletion requires typing the exact product slug in the admin UI.
   if (!id || !slug || confirmation !== slug) return
 
   const result = await db.product.deleteMany({
@@ -180,8 +180,10 @@ export async function hideProduct(formData: FormData) {
   if (!result.count) return
 
   revalidateProductPages(slug)
+
   redirect("/admin/products")
 }
+
 export async function showProduct(formData: FormData) {
   await guard()
 
@@ -198,67 +200,33 @@ export async function showProduct(formData: FormData) {
   if (!result.count) return
 
   revalidateProductPages(slug)
+
   redirect("/admin/products")
 }
+
 export async function updateProduct(formData: FormData) {
   await guard()
-
-  const id = String(formData.get("id") ?? "").trim()
-
-  const slug = String(formData.get("slug") ?? "").trim()
-  const number = String(formData.get("number") ?? "").trim()
-  const name = String(formData.get("name") ?? "").trim()
-  const nameAr = String(formData.get("nameAr") ?? "").trim()
-  const description = String(formData.get("description") ?? "").trim()
-  const descriptionAr = String(formData.get("descriptionAr") ?? "").trim()
-  const image = String(formData.get("image") ?? "").trim() || null
-  const category = String(formData.get("category") ?? "").trim() || null
-  const brand = String(formData.get("brand") ?? "").trim() || null
-  const featured = formData.get("featured") === "on"
-  const visible = formData.get("visible") === "on"
-
-  const sortOrder = Number(formData.get("sortOrder") ?? 0)
-
-  const tags = String(formData.get("tags") ?? "")
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-
-  if (!id || !slug || !number || !name || !nameAr) {
-    return
-  }
-
-  const existing = await db.product.findUnique({
-    where: { id },
-    select: { slug: true },
+  const id=String(formData.get('id') || '')
+  const data=productEditorData(formData); const rows=productRows(formData)
+  const oldSlug=await db.$transaction(async tx => {
+    const existing=await tx.product.findUniqueOrThrow({where:{id}})
+    const alias=await tx.productAlias.findUnique({where:{slug:data.slug}})
+    if (alias && alias.productId !== id) throw new Error('This slug is already used by another product URL.')
+    if (existing.slug !== data.slug) {
+      await tx.productAlias.upsert({where:{slug:existing.slug},create:{slug:existing.slug,productId:id},update:{}})
+    }
+    await tx.product.update({where:{id},data:{...data,legacySlug:existing.legacySlug || existing.slug}})
+    await saveProductRows(tx,id,rows)
+    return existing.slug
   })
-
-  if (!existing) return
-
-  await db.product.update({
-    where: { id },
-    data: {
-      slug,
-      number,
-      name,
-      nameAr,
-      description,
-      descriptionAr,
-      image,
-      category,
-      brand,
-      tags,
-      featured,
-      visible,
-      sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
-    },
-  })
-
-  revalidateProductPages(existing.slug)
-  if (existing.slug !== slug) revalidateProductPages(slug)
-
-  redirect("/admin/products")
+  revalidateProductPages(oldSlug)
+  revalidateProductPages(data.slug)
+  redirect('/admin/products')
 }
+
+// =========================
+// PROJECTS
+// =========================
 
 function projectData(formData: FormData) {
   const sortOrder = Number(formData.get("sortOrder") ?? 0)
@@ -270,6 +238,8 @@ function projectData(formData: FormData) {
     image: String(formData.get("image") ?? "").trim(),
     subtitle: String(formData.get("subtitle") ?? "").trim() || null,
     subtitleAr: String(formData.get("subtitleAr") ?? "").trim() || null,
+    description: String(formData.get("description") ?? "").trim(),
+    descriptionAr: String(formData.get("descriptionAr") ?? "").trim(),
     visible: formData.get("visible") === "on",
     sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
   }
@@ -279,10 +249,15 @@ export async function createProject(formData: FormData) {
   await guard()
 
   const data = projectData(formData)
-  if (!data.slug || !data.name || !data.nameAr || !data.image) return
+
+  if (!data.slug || !data.name || !data.nameAr || !data.image) {
+    return
+  }
 
   await db.project.create({ data })
+
   revalidateProjectPages()
+
   redirect("/admin/projects")
 }
 
@@ -291,7 +266,10 @@ export async function updateProject(formData: FormData) {
 
   const id = String(formData.get("id") ?? "").trim()
   const data = projectData(formData)
-  if (!id || !data.slug || !data.name || !data.nameAr || !data.image) return
+
+  if (!id || !data.slug || !data.name || !data.nameAr || !data.image) {
+    return
+  }
 
   const result = await db.project.updateMany({
     where: { id },
@@ -301,6 +279,7 @@ export async function updateProject(formData: FormData) {
   if (!result.count) return
 
   revalidateProjectPages()
+
   redirect("/admin/projects")
 }
 
@@ -309,6 +288,7 @@ export async function hideProject(formData: FormData) {
 
   const id = String(formData.get("id") ?? "").trim()
   const slug = String(formData.get("slug") ?? "").trim()
+
   if (!id || !slug) return
 
   const result = await db.project.updateMany({
@@ -319,6 +299,27 @@ export async function hideProject(formData: FormData) {
   if (!result.count) return
 
   revalidateProjectPages()
+
+  redirect("/admin/projects")
+}
+
+export async function showProject(formData: FormData) {
+  await guard()
+
+  const id = String(formData.get("id") ?? "").trim()
+  const slug = String(formData.get("slug") ?? "").trim()
+
+  if (!id || !slug) return
+
+  const result = await db.project.updateMany({
+    where: { id, slug, visible: false },
+    data: { visible: true },
+  })
+
+  if (!result.count) return
+
+  revalidateProjectPages()
+
   redirect("/admin/projects")
 }
 
@@ -338,23 +339,320 @@ export async function deleteProject(formData: FormData) {
   if (!result.count) return
 
   revalidateProjectPages()
+
   redirect("/admin/projects")
 }
-export async function showProject(formData: FormData) {
+
+// =========================
+// GALLERY IMAGES
+// =========================
+
+export async function createGalleryImage(formData: FormData) {
+  await guard()
+
+  const image = String(formData.get("image") ?? "").trim()
+  const title = String(formData.get("title") ?? "").trim()
+  const titleAr = String(formData.get("titleAr") ?? "").trim()
+
+  const description =
+    String(formData.get("description") ?? "").trim() || null
+
+  const descriptionAr =
+    String(formData.get("descriptionAr") ?? "").trim() || null
+
+  const category =
+    String(formData.get("category") ?? "").trim() || null
+
+  const section =
+    String(formData.get("section") ?? "").trim() || "general"
+
+  const featured = formData.get("featured") === "on"
+  const visible = formData.get("visible") === "on"
+  const sortOrder = Number(formData.get("sortOrder") ?? 0)
+
+  if (!image || !title || !titleAr) {
+    return
+  }
+
+  await db.galleryImage.create({
+    data: {
+      image,
+      title,
+      titleAr,
+      description,
+      descriptionAr,
+      category,
+      section,
+      featured,
+      visible,
+      sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
+    },
+  })
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+
+export async function updateGalleryImage(formData: FormData) {
   await guard()
 
   const id = String(formData.get("id") ?? "").trim()
-  const slug = String(formData.get("slug") ?? "").trim()
+  const image = String(formData.get("image") ?? "").trim()
+  const title = String(formData.get("title") ?? "").trim()
+  const titleAr = String(formData.get("titleAr") ?? "").trim()
 
-  if (!id || !slug) return
+  const description =
+    String(formData.get("description") ?? "").trim() || null
 
-  const result = await db.project.updateMany({
-    where: { id, slug, visible: false },
+  const descriptionAr =
+    String(formData.get("descriptionAr") ?? "").trim() || null
+
+  const category =
+    String(formData.get("category") ?? "").trim() || null
+
+  const section =
+    String(formData.get("section") ?? "").trim() || "general"
+
+  const featured = formData.get("featured") === "on"
+  const visible = formData.get("visible") === "on"
+  const sortOrder = Number(formData.get("sortOrder") ?? 0)
+
+  if (!id || !image || !title || !titleAr) {
+    return
+  }
+
+  const existing = await db.galleryImage.findUnique({
+    where: { id },
+    select: { id: true },
+  })
+
+  if (!existing) return
+
+  await db.galleryImage.update({
+    where: { id },
+    data: {
+      image,
+      title,
+      titleAr,
+      description,
+      descriptionAr,
+      category,
+      section,
+      featured,
+      visible,
+      sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
+    },
+  })
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+
+export async function hideGalleryImage(formData: FormData) {
+  await guard()
+
+  const id = String(formData.get("id") ?? "").trim()
+
+  if (!id) return
+
+  const result = await db.galleryImage.updateMany({
+    where: { id, visible: true },
+    data: { visible: false },
+  })
+
+  if (!result.count) return
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+
+export async function showGalleryImage(formData: FormData) {
+  await guard()
+
+  const id = String(formData.get("id") ?? "").trim()
+
+  if (!id) return
+
+  const result = await db.galleryImage.updateMany({
+    where: { id, visible: false },
     data: { visible: true },
   })
 
   if (!result.count) return
 
-  revalidateProjectPages()
-  redirect("/admin/projects")
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+
+export async function deleteGalleryImage(formData: FormData) {
+  await guard()
+
+  const id = String(formData.get("id") ?? "").trim()
+  const title = String(formData.get("title") ?? "").trim()
+  const confirmation = String(formData.get("confirmation") ?? "").trim()
+
+  if (!id || !title || confirmation !== title) {
+    return
+  }
+
+  const result = await db.galleryImage.deleteMany({
+    where: { id },
+  })
+
+  if (!result.count) return
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+
+// =========================
+// GALLERY SECTIONS
+// =========================
+
+export async function createGallerySection(formData: FormData) {
+  await guard()
+
+  const name = String(
+    formData.get("name") ?? ""
+  ).trim()
+
+  const nameAr = String(
+    formData.get("nameAr") ?? ""
+  ).trim()
+
+  const slug = String(
+    formData.get("slug") ?? ""
+  ).trim()
+
+  const coverImage = String(
+    formData.get("coverImage") ?? ""
+  ).trim()
+
+  const sortOrder = Number(
+    formData.get("sortOrder") ?? 0
+  )
+
+  if (!validSlug(slug)) throw new Error("Invalid section slug")
+  if (!name || !nameAr || !slug) {
+    return
+  }
+
+  await db.gallerySection.create({
+    data: {
+      name,
+      nameAr,
+      slug,
+
+      // Section cover is stored separately
+      // from GalleryImage records.
+      coverImage: coverImage || null,
+
+      visible: formData.get("visible") === "on",
+
+      sortOrder: Number.isFinite(sortOrder)
+        ? sortOrder
+        : 0,
+    },
+  })
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+export async function updateGallerySection(formData: FormData) {
+  await guard()
+
+  const id = String(
+    formData.get("id") ?? ""
+  ).trim()
+
+  const name = String(
+    formData.get("name") ?? ""
+  ).trim()
+
+  const nameAr = String(
+    formData.get("nameAr") ?? ""
+  ).trim()
+
+  const slug = String(
+    formData.get("slug") ?? ""
+  ).trim()
+
+  const coverImage = String(
+    formData.get("coverImage") ?? ""
+  ).trim()
+
+  const sortOrder = Number(
+    formData.get("sortOrder") ?? 0
+  )
+
+  const visible =
+    formData.get("visible") === "on"
+
+  if (!validSlug(slug)) throw new Error("Invalid section slug")
+  if (!id || !name || !nameAr || !slug) {
+    return
+  }
+
+  const existing = await db.gallerySection.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      slug: true,
+    },
+  })
+
+  if (!existing) {
+    return
+  }
+
+  if (existing.slug !== slug) {
+    await db.$transaction([
+      db.gallerySection.update({
+        where: { id },
+        data: {
+          name,
+          nameAr,
+          slug,
+          coverImage: coverImage || null,
+          visible,
+          sortOrder: Number.isFinite(sortOrder)
+            ? sortOrder
+            : 0,
+        },
+      }),
+
+      db.galleryImage.updateMany({
+        where: {
+          section: existing.slug,
+        },
+        data: {
+          section: slug,
+        },
+      }),
+    ])
+  } else {
+    await db.gallerySection.update({
+      where: { id },
+      data: {
+        name,
+        nameAr,
+        slug,
+        coverImage: coverImage || null,
+        visible,
+        sortOrder: Number.isFinite(sortOrder)
+          ? sortOrder
+          : 0,
+      },
+    })
+  }
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
 }

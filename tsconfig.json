@@ -29,7 +29,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "scripts/create-gallery-sections.js"  ],
   "exclude": [
     "node_modules"
   ]

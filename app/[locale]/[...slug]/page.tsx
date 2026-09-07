@@ -1,10 +1,11 @@
+import { productDocuments } from '../../../lib/legacy-product-content';
+import { assetDownloadUrl } from '../../../lib/asset-url';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { GalleryLightbox } from './gallery-lightbox';
-import { readdir } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { ReactNode } from 'react';
 import { TechnicalLibrarySearch } from '../../../components/technical-library-search';
+
 import RibbonFlowBackground from '../../../components/ribbon-flow-background';
 
 import { RfqForm } from '../../../components/rfq-form';
@@ -38,90 +39,6 @@ type ShellProps = {
   children: ReactNode;
   pageClassName?: string;
 };
-
-const galleryCollections = [
-  {
-    slug: 'nfpa-exhibition',
-    folder: 'nfpa-exhibition',
-    name: 'NFPA Exhibition',
-    mark: 'NFPA'
-  },
-  {
-    slug: 'intersec-dubai-exhibition',
-    folder: 'intersec-dubai-exhibition',
-    name: 'Intersec Dubai Exhibition',
-    mark: 'DUBAI'
-  },
-    {
-    slug: 'firex-exhibition',
-    folder: 'firex-exhibition',
-    name: 'FIREX Exhibition ',
-    mark: 'FIREX'
-  },
-  {
-    slug: 'cairo-ict-exhibition',
-    folder: 'cairo-ict-exhibition',
-    name: 'CAIRO ICT Exhibition',
-    mark: 'ICT'
-  },
-  {
-    slug: 'kirmary-international-llc',
-    folder: 'kirmary-international-llc',
-    name: 'KIRMARY International L.L.C.',
-    mark: 'KIRMARY'
-  },
-  {
-    slug: 'bristol',
-    folder: 'bristol',
-    name: 'Bristol',
-    mark: 'BRISTOL'
-  },
-  {
-    slug: 'spp',
-    folder: 'spp',
-    name: 'SPP',
-    mark: 'SPP'
-  },
-  {
-    slug: 'viking',
-    folder: 'viking',
-    name: 'Viking',
-    mark: 'VIKING'
-  },
-  {
-    slug: 'tiger-steel-erw-pipes',
-    folder: 'tiger-steel-erw-pipes',
-    name: 'Tiger Steel ERW Pipes',
-    mark: 'TIGER'
-  },
-  {
-    slug: 'lede',
-    folder: 'lede',
-    name: 'LEDE',
-    mark: 'LEDE'
-  },
-  {
-    slug: 'mech',
-    folder: 'mech',
-    name: 'MECH',
-    mark: 'MECH'
-  },
-  {
-    slug: 'zurn',
-    folder: 'zurn',
-    name: 'Zurn',
-    mark: 'ZURN'
-  },
-  {
-    slug: 'general',
-    folder: 'general',
-    name: 'General',
-    mark: 'GENERAL'
-  }
-] as const;
-
-type GalleryCollection =
-  (typeof galleryCollections)[number];
 
 /* ==================================================
    SHARED PAGE SHELL
@@ -292,7 +209,7 @@ function DocumentRows({
 
           <a
             className="botao"
-            href={document.src}
+            href={assetDownloadUrl(document.src)}
             download
             aria-label={
               ar
@@ -333,218 +250,6 @@ function DocumentRows({
    PRODUCT DOCUMENT FILTER
 ================================================== */
 
-function productDocuments(productId: string): ProductDocument[] {
-  if (productId === 'valmatic-air-vent') {
-    return [
-      {
-        src: '/Technical/valmatic-air-vent-submittal.pdf',
-        title: 'VALMATIC Automatic Air Vent Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-  if (productId === 'potter') {
-    return [
-      {
-        src: '/Technical/potter-submittal.pdf',
-        title: 'POTTER Fire Sprinkler Monitoring Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
- if (productId === 'victaulic-machines') {
-  return [
-    {
-      src: '/Technical/tuwei-machines-catalogue.pdf',
-      title: 'VICTAULIC-TUWEI Pipe Machinery Catalogue',
-      category: 'TECHNICAL SUBMITTAL'
-    }
-  ];
-}
-
-  if (productId === 'erico') {
-    return [
-      {
-        src: '/Technical/erico-hangers-submittal.pdf',
-        title: 'ERICO Hangers Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'zurn-drains') {
-    return [
-      {
-        src: '/Technical/zurn-drains-submittal.pdf',
-        title: 'KIRMARY - ZURN Drains Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'lede-valves') {
-    return [
-      {
-        src: '/Technical/lede-fire-valves-catalogue.pdf',
-        title: 'LEDE Fire Valves Catalogue',
-        category: 'PRODUCT CATALOGUE'
-      },
-      {
-        src: '/Technical/lede-fire-valves-submittal.pdf',
-        title: 'LEDE Valves for Fire Fighting Works',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'lede-grooved-fittings') {
-    return [
-      {
-        src: '/Technical/lede-grooved-catalogue-up-to-24.pdf',
-        title: 'LEDE Grooved Catalogue - Up to 24 Inch',
-        category: 'PRODUCT CATALOGUE'
-      },
-      {
-        src: '/Technical/lede-grooved-submittal-approvals.pdf',
-        title: 'LEDE Grooved Fittings Submittal & Approvals',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'viking-sprinklers') {
-    return [
-      {
-        src: '/Technical/viking-sprinklers-submittal.pdf',
-        title: 'VIKING Sprinklers Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'tiger-steel-pipes') {
-    return [
-      {
-        src: '/Technical/tiger-steel-erw-pipes-submittal.pdf',
-        title: 'TIGER Steel ERW Pipes Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'fire-cabinets') {
-    return [
-      {
-        src: '/Technical/kirmary-fire-cabinets-submittal.pdf',
-        title: 'KIRMARY Fire Hose Cabinets Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'lede-plumbing-hvac-valves') {
-    return [
-      {
-        src: '/Technical/lede-water-valves-catalogue.pdf',
-        title: 'LEDE Water Valves Catalogue',
-        category: 'PRODUCT CATALOGUE'
-      },
-      {
-        src: '/Technical/lede-plumbing-hvac-submittal.pdf',
-        title: 'LEDE Valves - Plumbing, Water Supply & HVAC',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'fire-hydrant') {
-    return [
-      {
-        src: '/Technical/km-fire-hydrant-submittal.pdf',
-        title: 'KIRMARY Dry Fire Hydrant Technical Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'bristol-fire-pumps') {
-    return [
-      {
-        src: '/Technical/bristol-fire-pumps-submittal.pdf',
-        title: 'BRISTOL Fire Pumps Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'spp-fire-pumps') {
-    return [
-      {
-        src: '/Technical/spp-fire-pumps-brochure.pdf',
-        title: 'SPP Fire Pumps & Systems Brochure',
-        category: 'PRODUCT BROCHURE'
-      },
-      {
-        src: '/Technical/spp-fire-pumps-submittal.pdf',
-        title: 'SPP Fire Pumps Submittal - USA - FM & UL',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  if (productId === 'mech-threaded-fittings') {
-    return [
-      {
-        src: '/Technical/mech-ductile-cast-iron-pipe-fittings.pdf',
-        title: 'MECH Ductile & Cast Iron Pipe Fittings',
-        category: 'PRODUCT CATALOGUE'
-      },
-      {
-        src: '/Technical/mech-threaded-fittings-300di-submittal.pdf',
-        title: 'MECH Threaded Fittings 300DI',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  const archiveMatches = archiveDocuments.filter(document => {
-    const name = document.title.toLowerCase();
-
-    if (productId === 'fire-cabinets') {
-      return name.includes('cabinet');
-    }
-
-    if (productId === 'fire-valves') {
-      return (
-        name.includes('valve') ||
-        name.includes('km100') ||
-        name.includes('km150') ||
-        name.includes('km200') ||
-        name.includes('km250') ||
-        name.includes('km300')
-      );
-    }
-
-    if (productId === 'fire-hydrant') {
-      return name.includes('hydrant');
-    }
-
-    return false;
-  });
-
-  if (productId === 'fire-valves') {
-    return [
-      {
-        src: '/Technical/kirmary-valves-submittal.pdf',
-        title: 'KIRMARY Valves Technical Submittal',
-        category: 'TECHNICAL SUBMITTAL'
-      }
-    ];
-  }
-
-  return archiveMatches;
-}
 
 /* ==================================================
    TECHNICAL LIBRARY — USED SUBMITTALS ONLY
@@ -596,25 +301,25 @@ export default async function Route({
     if (productSlug) {
       const product = await db.product.findFirst({
         where: {
-          slug: productSlug,
+          OR: [{slug: productSlug},{aliases:{some:{slug:productSlug}}}],
           visible: true
-        }
+        },
+        include:{features:{orderBy:[{sortOrder:"asc"},{createdAt:"asc"}]},documents:{orderBy:[{sortOrder:"asc"},{createdAt:"asc"}]}}
       });
 
       if (!product) {
         return notFound();
       }
 
-      const documents = productDocuments(
-        product.slug
-      );
+      const legacySlug = product.legacySlug || product.slug;
+      const documents = product.contentManaged ? product.documents.filter(d=>d.visible).map(d=>({src:d.fileUrl,title:ar ? d.titleAr || d.title : d.title,category:d.documentType})) : productDocuments(legacySlug);
 
       return (
         <Shell
           kicker={
-            ar
+            (product.contentManaged ? product.brand : null) || (ar
               ? 'منتجات KIRMARY'
-              : 'KIRMARY OWN PRODUCTS'
+              : 'KIRMARY OWN PRODUCTS')
           }
           title={
             ar
@@ -622,17 +327,17 @@ export default async function Route({
               : product.name
           }
           summary={
-            ar
+            (ar ? product.subtitleAr || product.subtitle : product.subtitle) || (ar
               ? 'حل هندسي من مجموعة KIRMARY، منظم لسهولة المراجعة الفنية والوصول إلى ملفات المنتج.'
-              : 'A KIRMARY-engineered product system presented for clear specification review and direct access to technical documentation.'
+              : 'A KIRMARY-engineered product system presented for clear specification review and direct access to technical documentation.')
           }
         >
-          <ProductCertificationProvider productId={product.slug}>
+          <ProductCertificationProvider productId={legacySlug}>
             <div className="product-detail-page premium-product-detail">
               <ProductDetailVisual
                 productId={product.slug}
                 productNumber={product.number}
-                productImage={product.image}
+                productImage={product.image || product.coverImage}
                 productName={
                   ar
                     ? product.nameAr
@@ -644,7 +349,7 @@ export default async function Route({
               />
 
               <div className="product-detail-copy">
-                {product.slug !== 'victaulic-machines' && (
+                {(product.contentManaged || legacySlug !== 'victaulic-machines') && (
                   <>
                     <SectionIntro
                       label={
@@ -664,9 +369,26 @@ export default async function Route({
                       }
                     />
 
-                    <ProductFeatureList
-                      tags={product.tags}
-                    />
+                    {product.contentManaged ? (
+                      <div className="product-feature-list">
+                        {product.features.filter(feature => feature.visible).map((feature, index) => {
+                          const description = ar ? feature.descriptionAr || feature.description : feature.description;
+                          const content = (
+                            <>
+                              <span>{String(index + 1).padStart(2, '0')}</span>
+                              <h3>{ar ? feature.titleAr || feature.title : feature.title}</h3>
+                              {description && <p>{description}</p>}
+                              {feature.documentUrl && <small>{feature.linkLabel || (ar ? 'افتح الملف ↗' : 'OPEN PDF ↗')}</small>}
+                            </>
+                          );
+                          return feature.documentUrl ? (
+                            <a key={feature.id} href={feature.documentUrl} target="_blank" rel="noopener noreferrer" className="product-feature product-feature--certificate-link">{content}</a>
+                          ) : (
+                            <article key={feature.id} className="product-feature">{content}</article>
+                          );
+                        })}
+                      </div>
+                    ) : <ProductFeatureList tags={product.tags} />}
                   </>
                 )}
 
@@ -780,9 +502,9 @@ export default async function Route({
               </div>
 
               <div className="premium-product-card__visual">
-                {product.image ? (
+                {(product.coverImage || product.image) ? (
                   <img
-                    src={product.image}
+                    src={(product.coverImage || product.image)!}
                     alt={
                       ar
                         ? product.nameAr
@@ -875,46 +597,9 @@ export default async function Route({
   ================================================== */
 
   if (root?.toLowerCase() === 'gallery') {
-    const imageFilePattern =
-      /\.(?:avif|gif|jpe?g|png|webp)$/i;
-
-    const readCollectionImages = async (
-      collection: GalleryCollection
-    ) => {
-      try {
-        const files = await readdir(
-          join(
-            process.cwd(),
-            'public',
-            'gallery',
-            collection.folder
-          ),
-          { withFileTypes: true }
-        );
-
-        return files
-          .filter(
-            file =>
-              file.isFile() &&
-              imageFilePattern.test(file.name)
-          )
-          .map(file => file.name)
-          .sort((first, second) =>
-            first.localeCompare(second, undefined, {
-              numeric: true,
-              sensitivity: 'base'
-            })
-          )
-          .map(fileName => ({
-            src: `/gallery/${collection.folder}/${encodeURIComponent(fileName)}`,
-            title: fileName
-              .replace(/\.[^.]+$/, '')
-              .replace(/[-_]+/g, ' ')
-          }));
-      } catch {
-        return [];
-      }
-    };
+ const sections = await db.gallerySection.findMany({where:{visible:true},orderBy:[{sortOrder:'asc'},{createdAt:'asc'}]});
+ const collections = sections.map(section => ({...section, name: ar ? section.nameAr || section.name : section.name, folder:section.slug, mark:section.name.slice(0,3).toUpperCase()}));
+ const readCollectionImages = async (collection: {slug:string}) => (await db.galleryImage.findMany({where:{section:collection.slug,visible:true},orderBy:[{sortOrder:'asc'},{createdAt:'asc'}]})).map(image=>({src:image.image,title:ar ? image.titleAr || image.title : image.title}));
 
     const galleryStyles = `
       .gallery-collection-card
@@ -1077,7 +762,7 @@ export default async function Route({
         : null;
 
     if (gallerySlug) {
-      const collection = galleryCollections.find(
+      const collection = collections.find(
         item => item.slug === gallerySlug
       );
 
@@ -1089,7 +774,7 @@ export default async function Route({
   collection
 );
 
-const images = allImages.slice(1);
+const images = allImages;
       return (
         <Shell
           kicker={
@@ -1128,15 +813,7 @@ const images = allImages.slice(1);
                     : 'This gallery is ready for images.'}
                 </strong>
 
-                <p>
-                  {ar
-                    ? 'أضيفي الصور داخل الفولدر التالي وستظهر تلقائيًا.'
-                    : 'Add image files to this folder and they will appear automatically.'}
-                </p>
 
-                <code>
-                  public/gallery/{collection.folder}
-                </code>
               </div>
             </div>
           )}
@@ -1145,15 +822,15 @@ const images = allImages.slice(1);
     }
 
     const collectionsWithImages = await Promise.all(
-      galleryCollections.map(async collection => {
+      collections.map(async collection => {
         const images = await readCollectionImages(
           collection
         );
 
         return {
   ...collection,
-  preview: images[0]?.src ?? null,
-  count: Math.max(images.length - 1, 0)
+  preview: collection.coverImage,
+  count: images.length
 };
       })
     );
@@ -1189,7 +866,7 @@ const images = allImages.slice(1);
               ? 'اختار المجموعة لعرض صورها.'
               : 'Choose a collection to view its images.'
           }
-          
+
         />
 
         <div className="premium-listing-grid gallery-collection-list">
@@ -1281,7 +958,7 @@ summary={
     : 'Trusted fire protection solutions for Egypt’s landmark projects.'
 }
 
-        
+
       >
         <SectionIntro
           label={
@@ -1399,7 +1076,7 @@ summary={
     objectFit: 'contain',
   }}
 />
-          
+
         </section>
       </Shell>
     );
@@ -2010,7 +1687,7 @@ if (root === 'contact') {
                     </h2>
 
                     <strong className="premium-chairman__role">
-                      
+
                     </strong>
 
                     <p>
@@ -2078,7 +1755,7 @@ if (root === 'contact') {
         </>
       )}
     </p>
- 
+
 
                       <p>
                         {ar ? (
@@ -2163,7 +1840,7 @@ if (root === 'contact') {
                         )}
                       </p>
 
-                     
+
                                         </div>
 
                     <p>

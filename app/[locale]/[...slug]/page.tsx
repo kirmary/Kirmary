@@ -908,10 +908,12 @@ export default async function Route({
       }
 
       const allImages = await readCollectionImages(
-  collection
-);
+        collection
+      );
 
-const images = allImages;
+      const images = allImages.filter(
+        image => image.src !== collection.coverImage
+      );
       return (
         <Shell
           kicker={
@@ -960,8 +962,12 @@ const images = allImages;
 
     const collectionsWithImages = await Promise.all(
       collections.map(async collection => {
-        const images = await readCollectionImages(
+        const allImages = await readCollectionImages(
           collection
+        );
+
+        const images = allImages.filter(
+          image => image.src !== collection.coverImage
         );
 
         const legacyCover = collection.coverImage

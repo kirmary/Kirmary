@@ -58,11 +58,11 @@ export function OrbitalHero({
   const activeRef = useRef(0);
 
   /*
-   * Existing products keep their current Orbital visual data
-   * from site-content.ts, so the current album design does not change.
+   * All visible products come from the database.
    *
-   * Any NEW visible Product that is not in orbitalItems is generated
-   * automatically from the database product data.
+   * Existing orbitalItems are still used as a visual fallback so the
+   * current Orbital design and product-specific ids keep working.
+   * Admin product data always takes priority for the visible content.
    */
   const items = useMemo(() => {
     return products.map(product => {
@@ -72,27 +72,28 @@ export function OrbitalHero({
         item => item.href === href
       );
 
-      if (existingItem) {
-        return {
-          ...existingItem,
-          index: product.number,
-          href
-        };
-      }
-
       return {
-        id: product.slug,
+        ...(existingItem || {}),
+        id: existingItem?.id || product.slug,
         index: product.number,
         eyebrow:
-          product.brand?.trim() || 'KIRMARY',
-        title: product.name.toUpperCase(),
+          product.brand?.trim() ||
+          existingItem?.eyebrow ||
+          'KIRMARY',
+        title:
+          product.name?.trim().toUpperCase() ||
+          existingItem?.title ||
+          'PRODUCT',
         subtitle:
           product.subtitle?.trim() ||
           product.category?.trim() ||
+          existingItem?.subtitle ||
           'PRODUCT SYSTEM',
         image:
           product.coverImage ||
-          product.image,
+          product.image ||
+          existingItem?.image ||
+          null,
         href
       };
     });

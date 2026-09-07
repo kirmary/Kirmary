@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { db } from "../../../lib/db"
 import { requireAdmin } from "../../../lib/admin-auth"
+import DeleteSectionButton from "./delete-section-button"
 
 export default async function AdminGalleryPage() {
   await requireAdmin()
@@ -158,13 +159,7 @@ export default async function AdminGalleryPage() {
               gap: "16px",
             }}
           >
-            {sections.map((section: {
-              id: string
-              slug: string
-              name: string
-              nameAr: string | null
-              visible: boolean
-            }) => {
+            {sections.map((section) => {
               const count =
                 imageCountBySection.get(section.slug) ?? 0
 
@@ -236,6 +231,8 @@ export default async function AdminGalleryPage() {
                       display: "flex",
                       gap: "10px",
                       marginTop: "20px",
+                      alignItems: "center",
+                      flexWrap: "wrap",
                     }}
                   >
                     <Link
@@ -250,6 +247,12 @@ export default async function AdminGalleryPage() {
                     >
                       Edit
                     </Link>
+
+                    <DeleteSectionButton
+                      id={section.id}
+                      name={section.name}
+                      imageCount={count}
+                    />
                   </div>
                 </div>
               )
@@ -279,17 +282,7 @@ export default async function AdminGalleryPage() {
               gap: "12px",
             }}
           >
-            {images.map((image: {
-              id: string
-              image: string
-              title: string
-              titleAr: string
-              category: string | null
-              featured: boolean
-              visible: boolean
-              sortOrder: number
-              section: string | null
-            }) => (
+            {images.map((image) => (
               <div
                 key={image.id}
                 style={{

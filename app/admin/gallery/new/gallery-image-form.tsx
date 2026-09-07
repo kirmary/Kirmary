@@ -1,8 +1,8 @@
-
 "use client"
-import { uploadAdminFile } from "../../../../lib/admin-upload-client";
 
+import { uploadAdminFile } from "../../../../lib/admin-upload-client"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { createGalleryImage } from "../../actions"
 
@@ -15,25 +15,84 @@ type GalleryImageFormProps = {
   sections: GallerySectionOption[]
 }
 
+function fileKey(file: File) {
+  return `${file.name}-${file.size}-${file.lastModified}`
+}
+
+function titleFromFileName(fileName: string) {
+  const withoutExtension = fileName.replace(/\.[^/.]+$/, "")
+
+  const cleaned = withoutExtension
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  return cleaned || "Gallery Image"
+}
+
 export default function GalleryImageForm({
   sections,
 }: GalleryImageFormProps) {
-  const [file, setFile] = useState<File | null>(null)
+  const router = useRouter()
+
+  const [files, setFiles] = useState<File[]>([])
+
   const [section, setSection] = useState(
     sections[0]?.value ?? "general"
   )
+
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  const handleFile = (selectedFile: File | null) => {
-    if (!selectedFile) return
+  const [processedCount, setProcessedCount] =
+    useState(0)
 
-    if (!selectedFile.type.startsWith("image/")) {
-      alert("Please select an image file.")
-      return
+  const [currentFileName, setCurrentFileName] =
+    useState("")
+
+  const addFiles = (fileList: FileList | File[]) => {
+    const selectedFiles = Array.from(fileList)
+
+    const images = selectedFiles.filter(
+      (file) => file.type.startsWith("image/")
+    )
+
+    const rejectedCount =
+      selectedFiles.length - images.length
+
+    if (rejectedCount > 0) {
+      alert(
+        `${rejectedCount} file(s) were ignored because they are not images.`
+      )
     }
 
-    setFile(selectedFile)
+    setFiles((currentFiles) => {
+      const existing = new Map(
+        currentFiles.map((file) => [
+          fileKey(file),
+          file,
+        ])
+      )
+
+      for (const image of images) {
+        existing.set(
+          fileKey(image),
+          image
+        )
+      }
+
+      return Array.from(existing.values())
+    })
+  }
+
+  const removeFile = (fileToRemove: File) => {
+    const key = fileKey(fileToRemove)
+
+    setFiles((currentFiles) =>
+      currentFiles.filter(
+        (file) => fileKey(file) !== key
+      )
+    )
   }
 
   const handleSubmit = async (
@@ -41,56 +100,204 @@ export default function GalleryImageForm({
   ) => {
     event.preventDefault()
 
-    if (!file) {
-      alert("Please select an image.")
+    if (!files.length) {
+      alert("Please select one or more images.")
       return
     }
 
+    if (!section) {
+      alert("Please select a Gallery Section.")
+      return
+    }
+
+    const formData =
+      new FormData(event.currentTarget)
+
+    const category = String(
+      formData.get("category") ?? ""
+    ).trim()
+
+    const startSortOrder = Number(
+      formData.get("sortOrder") ?? 0
+    )
+
+    const visible =
+      formData.get("visible") === "on"
+
     try {
       setUploading(true)
+      setProcessedCount(0)
+      setCurrentFileName("")
 
-      const formData = new FormData(event.currentTarget)
-      formData.set("section", section)
+      const uploadedImages: Array<{
+        image: string
+        title: string
+        titleAr: string
+        category: string | null
+        section: string
+        visible: boolean
+        sortOrder: number
+      }> = []
 
-      const uploadData = new FormData()
-      uploadData.append("file", file)
-      uploadData.append("section", section)
+      const failedFiles: string[] = []
 
-      const uploadResponse = await uploadAdminFile("/api/admin/gallery/upload", uploadData)
+      for (
+        let index = 0;
+        index < files.length;
+        index++
+      ) {
+        const file = files[index]
 
-      const uploadText = await uploadResponse.text()
+        setCurrentFileName(file.name)
 
-      let uploadResult: {
-        success?: boolean
-        path?: string
-        error?: string
-      } = {}
+        try {
+          const uploadData = new FormData()
 
-      try {
-        uploadResult = JSON.parse(uploadText)
-      } catch {
+          uploadData.append(
+            "file",
+            file
+          )
+
+          uploadData.append(
+            "section",
+            section
+          )
+
+          const uploadResponse =
+            await uploadAdminFile(
+              "/api/admin/gallery/upload",
+              uploadData
+            )
+
+          const uploadText =
+            await uploadResponse.text()
+
+          let uploadResult: {
+            success?: boolean
+            path?: string
+            error?: string
+          } = {}
+
+          try {
+            uploadResult =
+              JSON.parse(uploadText)
+          } catch {
+            throw new Error(
+              `Upload API returned an invalid response (${uploadResponse.status}).`
+            )
+          }
+
+          if (!uploadResponse.ok) {
+            throw new Error(
+              uploadResult.error ||
+                "Upload failed."
+            )
+          }
+
+          if (!uploadResult.path) {
+            throw new Error(
+              "Upload succeeded but no image path was returned."
+            )
+          }
+
+          const automaticTitle =
+            titleFromFileName(file.name)
+
+          uploadedImages.push({
+            image: uploadResult.path,
+
+            // اسم الملف بيتحول تلقائيًا لـ Title
+            title: automaticTitle,
+
+            // لأن Title Arabic مطلوب في الـDatabase
+            // بنستخدم نفس اسم الملف تلقائيًا
+            titleAr: automaticTitle,
+
+            category:
+              category || null,
+
+            section,
+
+            visible,
+
+            sortOrder:
+              (Number.isFinite(
+                startSortOrder
+              )
+                ? startSortOrder
+                : 0) + index,
+          })
+        } catch (error) {
+          console.error(
+            `Failed to upload ${file.name}`,
+            error
+          )
+
+          failedFiles.push(file.name)
+        }
+
+        setProcessedCount(index + 1)
+      }
+
+      if (!uploadedImages.length) {
         throw new Error(
-          `Upload API returned an invalid response (${uploadResponse.status}).`
+          "None of the selected images could be uploaded."
         )
       }
 
-      if (!uploadResponse.ok) {
+      await Promise.all(
+        uploadedImages.map((image) => {
+          const imageFormData = new FormData()
+
+          imageFormData.append("image", image.image)
+          imageFormData.append("title", image.title)
+          imageFormData.append("titleAr", image.titleAr)
+          imageFormData.append(
+            "category",
+            image.category ?? ""
+          )
+          imageFormData.append("section", image.section)
+          imageFormData.append(
+            "visible",
+            String(image.visible)
+          )
+          imageFormData.append(
+            "sortOrder",
+            String(image.sortOrder)
+          )
+
+          return createGalleryImage(imageFormData)
+        })
+      )
+
+      const result = {
+        created: uploadedImages.length,
+      }
+
+      if (
+        !result ||
+        result.created === 0
+      ) {
         throw new Error(
-          uploadResult.error || "Upload failed."
+          "Images were uploaded but could not be added to the gallery database."
         )
       }
 
-      if (!uploadResult.path) {
-        throw new Error(
-          "Upload succeeded but no image path was returned."
+      if (failedFiles.length > 0) {
+        alert(
+          `${result.created} image(s) added successfully.\n\n${failedFiles.length} image(s) failed:\n${failedFiles.join(
+            "\n"
+          )}`
+        )
+      } else {
+        alert(
+          `${result.created} images uploaded successfully.`
         )
       }
 
-      formData.set("image", uploadResult.path)
-
-      await createGalleryImage(formData)
+      router.push("/admin/gallery")
+      router.refresh()
     } catch (error) {
-      if (error instanceof Error && error.message === "NEXT_REDIRECT") return
       console.error(error)
 
       alert(
@@ -100,6 +307,7 @@ export default function GalleryImageForm({
       )
     } finally {
       setUploading(false)
+      setCurrentFileName("")
     }
   }
 
@@ -110,7 +318,11 @@ export default function GalleryImageForm({
         maxWidth: "900px",
       }}
     >
-      <div style={{ marginBottom: "28px" }}>
+      <div
+        style={{
+          marginBottom: "28px",
+        }}
+      >
         <Link href="/admin/gallery">
           ← Back to Gallery
         </Link>
@@ -121,11 +333,12 @@ export default function GalleryImageForm({
             marginBottom: "8px",
           }}
         >
-          Add Gallery Image
+          Add Gallery Images
         </h1>
 
         <p style={{ opacity: 0.7 }}>
-          Add a new image to the KIRMARY visual archive.
+          Drag and drop multiple images and
+          upload them to one gallery section.
         </p>
       </div>
 
@@ -136,13 +349,20 @@ export default function GalleryImageForm({
           gap: "20px",
         }}
       >
+        {/* MULTIPLE IMAGE DROP ZONE */}
+
         <div>
-          <label>Gallery Image</label>
+          <label>
+            Gallery Images
+          </label>
 
           <div
             onDragOver={(event) => {
               event.preventDefault()
-              setDragging(true)
+
+              if (!uploading) {
+                setDragging(true)
+              }
             }}
             onDragLeave={() => {
               setDragging(false)
@@ -151,46 +371,53 @@ export default function GalleryImageForm({
               event.preventDefault()
               setDragging(false)
 
-              handleFile(
-                event.dataTransfer.files?.[0] ?? null
+              if (uploading) return
+
+              addFiles(
+                event.dataTransfer.files
               )
             }}
             onClick={() => {
+              if (uploading) return
+
               document
-                .getElementById("file")
+                .getElementById(
+                  "gallery-files"
+                )
                 ?.click()
             }}
             style={{
               marginTop: "8px",
-              padding: "40px 20px",
+              padding: "48px 20px",
+
               border: `2px dashed ${
-                dragging ? "#111" : "#ccc"
+                dragging
+                  ? "#111"
+                  : "#ccc"
               }`,
+
               borderRadius: "12px",
+
               textAlign: "center",
+
               background: dragging
                 ? "#f5f5f5"
                 : "#fafafa",
-              cursor: "pointer",
+
+              cursor: uploading
+                ? "not-allowed"
+                : "pointer",
             }}
           >
-            {file ? (
-              <div>
-                <strong>{file.name}</strong>
-
-                <p
+            {files.length > 0 ? (
+              <>
+                <strong
                   style={{
-                    marginTop: "8px",
-                    opacity: 0.6,
+                    fontSize: "20px",
                   }}
                 >
-                  Image selected successfully
-                </p>
-              </div>
-            ) : (
-              <>
-                <strong>
-                  Drag & Drop your image here
+                  {files.length} images
+                  selected
                 </strong>
 
                 <p
@@ -199,89 +426,198 @@ export default function GalleryImageForm({
                     opacity: 0.6,
                   }}
                 >
-                  or click to choose an image
+                  Drop more images here or
+                  click to add more
+                </p>
+              </>
+            ) : (
+              <>
+                <strong
+                  style={{
+                    fontSize: "18px",
+                  }}
+                >
+                  Drag & Drop ALL images here
+                </strong>
+
+                <p
+                  style={{
+                    marginTop: "8px",
+                    opacity: 0.6,
+                  }}
+                >
+                  or click to select multiple
+                  images
                 </p>
               </>
             )}
 
             <input
-              id="file"
+              id="gallery-files"
               type="file"
               accept="image/*"
-              style={{ display: "none" }}
+              multiple
+              disabled={uploading}
+              style={{
+                display: "none",
+              }}
               onChange={(event) => {
-                handleFile(
-                  event.target.files?.[0] ?? null
-                )
+                if (
+                  event.target.files
+                ) {
+                  addFiles(
+                    event.target.files
+                  )
+                }
+
+                // يسمح باختيار نفس الصور تاني
+                event.currentTarget.value =
+                  ""
               }}
             />
           </div>
         </div>
 
-        <div>
-          <label htmlFor="title">
-            Title (English)
-          </label>
+        {/* SELECTED IMAGES */}
 
-          <input
-            id="title"
-            name="title"
-            required
-            style={inputStyle}
-          />
-        </div>
+        {files.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: "12px",
+              padding: "16px",
+              background: "#fff",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "space-between",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "14px",
+              }}
+            >
+              <strong>
+                Selected Images (
+                {files.length})
+              </strong>
 
-        <div>
-          <label htmlFor="titleAr">
-            Title (Arabic)
-          </label>
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() =>
+                  setFiles([])
+                }
+                style={{
+                  border: 0,
+                  background:
+                    "transparent",
+                  cursor: uploading
+                    ? "not-allowed"
+                    : "pointer",
+                  color: "#c00",
+                }}
+              >
+                Clear All
+              </button>
+            </div>
 
-          <input
-            id="titleAr"
-            name="titleAr"
-            required
-            style={inputStyle}
-          />
-        </div>
+            <div
+              style={{
+                display: "grid",
+                gap: "8px",
+                maxHeight: "300px",
+                overflowY: "auto",
+              }}
+            >
+              {files.map(
+                (file, index) => (
+                  <div
+                    key={fileKey(file)}
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems:
+                        "center",
+                      gap: "12px",
+                      padding:
+                        "10px 12px",
+                      border:
+                        "1px solid #eee",
+                      borderRadius:
+                        "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        minWidth: 0,
+                      }}
+                    >
+                      <strong>
+                        {String(
+                          index + 1
+                        ).padStart(
+                          2,
+                          "0"
+                        )}
+                        {" · "}
+                        {file.name}
+                      </strong>
 
-        <div>
-          <label htmlFor="description">
-            Description (English)
-          </label>
+                      <div
+                        style={{
+                          marginTop:
+                            "3px",
+                          fontSize:
+                            "12px",
+                          opacity: 0.55,
+                        }}
+                      >
+                        {(
+                          file.size /
+                          1024 /
+                          1024
+                        ).toFixed(2)}{" "}
+                        MB
+                      </div>
+                    </div>
 
-          <textarea
-            id="description"
-            name="description"
-            rows={4}
-            style={inputStyle}
-          />
-        </div>
+                    <button
+                      type="button"
+                      disabled={
+                        uploading
+                      }
+                      onClick={() =>
+                        removeFile(
+                          file
+                        )
+                      }
+                      style={{
+                        border: 0,
+                        background:
+                          "transparent",
+                        color: "#c00",
+                        cursor:
+                          uploading
+                            ? "not-allowed"
+                            : "pointer",
+                        fontSize:
+                          "18px",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
 
-        <div>
-          <label htmlFor="descriptionAr">
-            Description (Arabic)
-          </label>
-
-          <textarea
-            id="descriptionAr"
-            name="descriptionAr"
-            rows={4}
-            style={inputStyle}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="category">
-            Category
-          </label>
-
-          <input
-            id="category"
-            name="category"
-            placeholder="Projects, Products, Events..."
-            style={inputStyle}
-          />
-        </div>
+        {/* SECTION */}
 
         <div>
           <label htmlFor="section">
@@ -292,8 +628,11 @@ export default function GalleryImageForm({
             id="section"
             name="section"
             value={section}
+            disabled={uploading}
             onChange={(event) => {
-              setSection(event.target.value)
+              setSection(
+                event.target.value
+              )
             }}
             style={inputStyle}
           >
@@ -308,9 +647,27 @@ export default function GalleryImageForm({
           </select>
         </div>
 
+        {/* CATEGORY */}
+
+        <div>
+          <label htmlFor="category">
+            Category
+          </label>
+
+          <input
+            id="category"
+            name="category"
+            placeholder="Events, Products, Exhibitions..."
+            disabled={uploading}
+            style={inputStyle}
+          />
+        </div>
+
+        {/* STARTING SORT ORDER */}
+
         <div>
           <label htmlFor="sortOrder">
-            Sort Order
+            Starting Sort Order
           </label>
 
           <input
@@ -318,28 +675,94 @@ export default function GalleryImageForm({
             name="sortOrder"
             type="number"
             defaultValue={0}
+            disabled={uploading}
             style={inputStyle}
           />
+
+          <small
+            style={{
+              display: "block",
+              marginTop: "7px",
+              opacity: 0.6,
+            }}
+          >
+            Images will automatically become
+            0, 1, 2, 3...
+          </small>
         </div>
 
-        <label>
-          <input
-            type="checkbox"
-            name="featured"
-          />
-          {" "}
-          Featured image
-        </label>
+        {/* VISIBILITY */}
 
         <label>
           <input
             type="checkbox"
             name="visible"
             defaultChecked
+            disabled={uploading}
           />
           {" "}
           Visible on website
         </label>
+
+        {/* UPLOAD PROGRESS */}
+
+        {uploading && (
+          <div
+            style={{
+              padding: "18px",
+              borderRadius: "10px",
+              background: "#f5f5f5",
+              border: "1px solid #ddd",
+            }}
+          >
+            <strong>
+              Uploading {processedCount} /{" "}
+              {files.length}
+            </strong>
+
+            {currentFileName && (
+              <p
+                style={{
+                  marginBottom: 0,
+                  opacity: 0.7,
+                  overflowWrap:
+                    "anywhere",
+                }}
+              >
+                {currentFileName}
+              </p>
+            )}
+
+            <div
+              style={{
+                width: "100%",
+                height: "8px",
+                marginTop: "14px",
+                borderRadius: "999px",
+                overflow: "hidden",
+                background: "#ddd",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${
+                    files.length
+                      ? (processedCount /
+                          files.length) *
+                        100
+                      : 0
+                  }%`,
+                  background: "#111",
+                  transition:
+                    "width 0.2s ease",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* BUTTONS */}
 
         <div
           style={{
@@ -350,29 +773,45 @@ export default function GalleryImageForm({
         >
           <button
             type="submit"
-            disabled={uploading}
+            disabled={
+              uploading ||
+              files.length === 0
+            }
             style={{
               padding: "12px 20px",
               border: 0,
               borderRadius: "8px",
               background: "#111",
               color: "#fff",
-              cursor: uploading
-                ? "not-allowed"
-                : "pointer",
-              opacity: uploading ? 0.6 : 1,
+
+              cursor:
+                uploading ||
+                files.length === 0
+                  ? "not-allowed"
+                  : "pointer",
+
+              opacity:
+                uploading ||
+                files.length === 0
+                  ? 0.55
+                  : 1,
             }}
           >
             {uploading
-              ? "Uploading..."
-              : "Add Image"}
+              ? `Uploading ${processedCount}/${files.length}...`
+              : `Upload ${files.length} ${
+                  files.length === 1
+                    ? "Image"
+                    : "Images"
+                }`}
           </button>
 
           <Link
             href="/admin/gallery"
             style={{
               padding: "12px 20px",
-              border: "1px solid #ccc",
+              border:
+                "1px solid #ccc",
               borderRadius: "8px",
               textDecoration: "none",
             }}
@@ -395,4 +834,3 @@ const inputStyle = {
   fontSize: "15px",
   boxSizing: "border-box" as const,
 }
-

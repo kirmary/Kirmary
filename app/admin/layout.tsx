@@ -3,7 +3,9 @@ import { isAdmin } from "../../lib/admin-auth"
 import { logout } from "./actions"
 import styles from "../../components/admin/admin.module.css"
 
-export const metadata = { title: "Dashboard | KIRMARY" }
+export const metadata = {
+  title: "Dashboard | KIRMARY",
+}
 
 // كل صفحة تحت /admin بتمر من هنا الأول.
 // isAdmin بترجّع أي حد مش مسجّل لصفحة الدخول.
@@ -14,7 +16,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  if (!(await isAdmin())) return children
+  if (!(await isAdmin())) {
+    return children
+  }
 
   return (
     <div className={styles.shell}>
@@ -25,22 +29,51 @@ export default async function AdminLayout({
         </div>
 
         <nav className={styles.nav}>
-  <Link href="/admin">Quotation requests</Link>
-  <Link href="/admin/messages">Messages</Link>
-  <Link href="/admin/products">Products</Link>
-  <Link href="/admin/projects">Projects</Link>
-  <Link href="/admin/gallery">Gallery</Link>
-  <Link href="/">View website</Link>
-</nav>
+          <Link href="/admin">
+            Quotation requests
+          </Link>
 
-        <form action={logout} className={styles.logoutForm}>
-          <button type="submit" className={styles.logout}>
+          <Link href="/admin/messages">
+            Messages
+          </Link>
+
+          <Link href="/admin/products">
+            Products
+          </Link>
+
+          <Link href="/admin/projects">
+            Projects
+          </Link>
+
+          <Link href="/admin/gallery">
+            Gallery
+          </Link>
+
+          <Link href="/admin/technical-library">
+            Technical Library
+          </Link>
+
+          <Link href="/">
+            View website
+          </Link>
+        </nav>
+
+        <form
+          action={logout}
+          className={styles.logoutForm}
+        >
+          <button
+            type="submit"
+            className={styles.logout}
+          >
             Sign out
           </button>
         </form>
       </aside>
 
-      <main className={styles.main}>{children}</main>
+      <main className={styles.main}>
+        {children}
+      </main>
     </div>
   )
 }

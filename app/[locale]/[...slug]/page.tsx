@@ -27,6 +27,8 @@ import {
   ownedProducts
 } from '../../../lib/site-content';
 import { db } from '../../../lib/db';
+import { readdir } from 'fs/promises';
+import { join } from 'path';
 
 /* ==================================================
    TYPES
@@ -548,6 +550,103 @@ export default async function Route({
   ================================================== */
 
   if (root === 'technical-library') {
+    /*
+     * الـ16 Technical Submittals الأصليين يفضلوا كما هم.
+     *
+     * أي ProductDocument جديد يتم حفظه من:
+     * - Product موجود
+     * - Product جديد
+     * - صفحة Technical Library في الـAdmin
+     *
+     * يظهر تلقائيًا بعدهم هنا.
+     */
+
+    const databaseTechnicalDocuments =
+      await db.productDocument.findMany({
+        where: {
+          visible: true,
+          product: {
+            visible: true
+          }
+        },
+        select: {
+          id: true,
+          title: true,
+          titleAr: true,
+          documentType: true,
+          fileUrl: true,
+          sortOrder: true,
+          createdAt: true,
+          product: {
+            select: {
+              sortOrder: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            product: {
+              sortOrder: 'asc'
+            }
+          },
+          {
+            sortOrder: 'asc'
+          },
+          {
+            createdAt: 'asc'
+          }
+        ]
+      });
+
+    const newTechnicalDocuments: ProductDocument[] =
+      databaseTechnicalDocuments
+        .filter(document => document.fileUrl.trim())
+        .map(document => ({
+          src: document.fileUrl,
+          title: ar
+            ? document.titleAr || document.title
+            : document.title,
+          category:
+            document.documentType ||
+            'TECHNICAL DOCUMENT'
+        }));
+
+    /*
+     * نحافظ على ترتيب الـ16 الأصليين أولًا.
+     * ولو نفس الملف موجود بالفعل في الـ16
+     * لا يتم عرضه مرة ثانية.
+     */
+    const existingTechnicalDocumentPaths =
+      new Set(
+        technicalLibraryDocuments.map(
+          document => document.src
+        )
+      );
+
+    const uniqueNewTechnicalDocuments =
+      newTechnicalDocuments.filter(
+        document => {
+          if (
+            existingTechnicalDocumentPaths.has(
+              document.src
+            )
+          ) {
+            return false;
+          }
+
+          existingTechnicalDocumentPaths.add(
+            document.src
+          );
+
+          return true;
+        }
+      );
+
+    const allTechnicalLibraryDocuments: ProductDocument[] = [
+      ...technicalLibraryDocuments,
+      ...uniqueNewTechnicalDocuments
+    ];
+
     return (
       <Shell
         kicker={
@@ -562,32 +661,34 @@ export default async function Route({
         }
         summary={
           ar
-            ? 'ملفات الـSubmittals الفنية المستخدمة حاليًا ضمن منتجات KIRMARY.'
-            : 'Technical submittals currently used across the KIRMARY product portfolio.'
+            ? 'ملفات الـSubmittals والمستندات الفنية المتاحة ضمن منتجات KIRMARY.'
+            : 'Technical submittals and documentation currently available across the KIRMARY product portfolio.'
         }
       >
         <SectionIntro
           label={
             ar
-              ? 'SUBMITTALS الفنية'
+              ? 'المستندات الفنية'
               : 'TECHNICAL SUBMITTALS'
           }
           title={
             ar
-              ? 'ملفات المنتجات المستخدمة حاليًا.'
+              ? 'ملفات المنتجات الحالية.'
               : 'Current product submittals.'
           }
           copy={
             ar
-              ? `تحتوي المكتبة على ${technicalLibraryDocuments.length} ملف Submittal فني مستخدم ضمن منتجات KIRMARY.`
-              : `${technicalLibraryDocuments.length} technical submittals are available for direct access.`
+              ? `تحتوي المكتبة حاليًا على ${allTechnicalLibraryDocuments.length} ملف فني متاح للوصول المباشر.`
+              : `${allTechnicalLibraryDocuments.length} technical documents are available for direct access.`
           }
         />
 
         <TechnicalLibrarySearch
-  documents={technicalLibraryDocuments}
-  locale={locale}
-/>
+          documents={
+            allTechnicalLibraryDocuments
+          }
+          locale={locale}
+        />
       </Shell>
     );
   }
@@ -600,6 +701,42 @@ export default async function Route({
  const sections = await db.gallerySection.findMany({where:{visible:true},orderBy:[{sortOrder:'asc'},{createdAt:'asc'}]});
  const collections = sections.map(section => ({...section, name: ar ? section.nameAr || section.name : section.name, folder:section.slug, mark:section.name.slice(0,3).toUpperCase()}));
  const readCollectionImages = async (collection: {slug:string}) => (await db.galleryImage.findMany({where:{section:collection.slug,visible:true},orderBy:[{sortOrder:'asc'},{createdAt:'asc'}]})).map(image=>({src:image.image,title:ar ? image.titleAr || image.title : image.title}));
+
+ const imageFilePattern = /\.(?:avif|gif|jpe?g|png|webp)$/i;
+
+ const readLegacyCollectionCover = async (collection: {slug:string}) => {
+   try {
+     const files = await readdir(
+       join(
+         process.cwd(),
+         'public',
+         'gallery',
+         collection.slug
+       ),
+       { withFileTypes: true }
+     );
+
+     const firstImageFile = files
+       .filter(
+         file =>
+           file.isFile() &&
+           imageFilePattern.test(file.name)
+       )
+       .map(file => file.name)
+       .sort((first, second) =>
+         first.localeCompare(second, undefined, {
+           numeric: true,
+           sensitivity: 'base'
+         })
+       )[0];
+
+     return firstImageFile
+       ? `/gallery/${collection.slug}/${encodeURIComponent(firstImageFile)}`
+       : null;
+   } catch {
+     return null;
+   }
+ };
 
     const galleryStyles = `
       .gallery-collection-card
@@ -827,11 +964,19 @@ const images = allImages;
           collection
         );
 
+        const legacyCover = collection.coverImage
+          ? null
+          : await readLegacyCollectionCover(collection);
+
         return {
-  ...collection,
-  preview: collection.coverImage,
-  count: images.length
-};
+          ...collection,
+          preview:
+            collection.coverImage ||
+            legacyCover ||
+            images[0]?.src ||
+            null,
+          count: images.length
+        };
       })
     );
 

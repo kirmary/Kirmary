@@ -31,6 +31,7 @@
     ".next/dev/types/**/*.ts"
 , "scripts/create-gallery-sections.js"  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "kirmary-hobby-route-fix"
   ]
 }

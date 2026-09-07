@@ -43,6 +43,17 @@ function revalidateGalleryPages() {
   revalidatePath("/admin/gallery/sections")
 }
 
+function revalidateTechnicalLibrary(productSlug?: string) {
+  revalidatePath("/admin/technical-library")
+  revalidatePath("/en/technical-library")
+  revalidatePath("/ar/technical-library")
+
+  if (productSlug) {
+    revalidatePath("/en/products/" + productSlug)
+    revalidatePath("/ar/products/" + productSlug)
+  }
+}
+
 // =========================
 // AUTH
 // =========================
@@ -153,13 +164,35 @@ export async function deleteProduct(formData: FormData) {
 
   if (!id || !slug || confirmation !== slug) return
 
-  const result = await db.product.deleteMany({
+  const product = await db.product.findFirst({
     where: { id, slug },
+    select: {
+      id: true,
+      slug: true,
+    },
   })
 
-  if (!result.count) return
+  if (!product) return
 
-  revalidateProductPages(slug)
+  await db.$transaction([
+    db.productAlias.deleteMany({
+      where: { productId: product.id },
+    }),
+
+    db.productFeature.deleteMany({
+      where: { productId: product.id },
+    }),
+
+    db.productDocument.deleteMany({
+      where: { productId: product.id },
+    }),
+
+    db.product.delete({
+      where: { id: product.id },
+    }),
+  ])
+
+  revalidateProductPages(product.slug)
 
   redirect("/admin/products")
 }
@@ -222,6 +255,247 @@ export async function updateProduct(formData: FormData) {
   revalidateProductPages(oldSlug)
   revalidateProductPages(data.slug)
   redirect('/admin/products')
+}
+
+// =========================
+// TECHNICAL LIBRARY
+// =========================
+
+export async function createTechnicalDocument(formData: FormData) {
+  await guard()
+
+  const productId = String(
+    formData.get("productId") ?? ""
+  ).trim()
+
+  const title = String(
+    formData.get("title") ?? ""
+  ).trim()
+
+  const titleAr = String(
+    formData.get("titleAr") ?? ""
+  ).trim()
+
+  const originalFileName = String(
+    formData.get("originalFileName") ?? ""
+  ).trim()
+
+  const documentType = String(
+    formData.get("documentType") ?? ""
+  ).trim()
+
+  const fileUrl = String(
+    formData.get("fileUrl") ?? ""
+  ).trim()
+
+  const sortOrder = Number(
+    formData.get("sortOrder") ?? 0
+  )
+
+  const visible =
+    formData.get("visible") === "on"
+
+  if (
+    !productId ||
+    !title ||
+    !originalFileName ||
+    !documentType ||
+    !fileUrl
+  ) {
+    return
+  }
+
+  const product = await db.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      slug: true,
+    },
+  })
+
+  if (!product) {
+    return
+  }
+
+  await db.productDocument.create({
+    data: {
+      productId: product.id,
+      title,
+      titleAr,
+      originalFileName,
+      documentType,
+      fileUrl,
+      visible,
+      sortOrder: Number.isFinite(sortOrder)
+        ? sortOrder
+        : 0,
+    },
+  })
+
+  revalidateTechnicalLibrary(product.slug)
+
+  redirect("/admin/technical-library")
+}
+
+export async function updateTechnicalDocument(formData: FormData) {
+  await guard()
+
+  const id = String(
+    formData.get("id") ?? ""
+  ).trim()
+
+  const productId = String(
+    formData.get("productId") ?? ""
+  ).trim()
+
+  const title = String(
+    formData.get("title") ?? ""
+  ).trim()
+
+  const titleAr = String(
+    formData.get("titleAr") ?? ""
+  ).trim()
+
+  const originalFileName = String(
+    formData.get("originalFileName") ?? ""
+  ).trim()
+
+  const documentType = String(
+    formData.get("documentType") ?? ""
+  ).trim()
+
+  const fileUrl = String(
+    formData.get("fileUrl") ?? ""
+  ).trim()
+
+  const sortOrder = Number(
+    formData.get("sortOrder") ?? 0
+  )
+
+  const visible =
+    formData.get("visible") === "on"
+
+  if (
+    !id ||
+    !productId ||
+    !title ||
+    !originalFileName ||
+    !documentType ||
+    !fileUrl
+  ) {
+    return
+  }
+
+  const existingDocument =
+    await db.productDocument.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        product: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+    })
+
+  if (!existingDocument) {
+    return
+  }
+
+  const newProduct =
+    await db.product.findUnique({
+      where: { id: productId },
+      select: {
+        id: true,
+        slug: true,
+      },
+    })
+
+  if (!newProduct) {
+    return
+  }
+
+  await db.productDocument.update({
+    where: { id },
+    data: {
+      productId: newProduct.id,
+      title,
+      titleAr,
+      originalFileName,
+      documentType,
+      fileUrl,
+      visible,
+      sortOrder: Number.isFinite(sortOrder)
+        ? sortOrder
+        : 0,
+    },
+  })
+
+  revalidateTechnicalLibrary(
+    existingDocument.product.slug
+  )
+
+  if (
+    newProduct.slug !==
+    existingDocument.product.slug
+  ) {
+    revalidateTechnicalLibrary(
+      newProduct.slug
+    )
+  }
+
+  redirect("/admin/technical-library")
+}
+
+export async function deleteTechnicalDocument(formData: FormData) {
+  await guard()
+
+  const id = String(
+    formData.get("id") ?? ""
+  ).trim()
+
+  const confirmation = String(
+    formData.get("confirmation") ?? ""
+  ).trim()
+
+  if (
+    !id ||
+    confirmation !== "DELETE"
+  ) {
+    return
+  }
+
+  const document =
+    await db.productDocument.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        product: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+    })
+
+  if (!document) {
+    return
+  }
+
+  await db.productDocument.delete({
+    where: {
+      id: document.id,
+    },
+  })
+
+  // بنحذف Record من الـDatabase فقط.
+  // ملف الـPDF نفسه لا يتم حذفه من التخزين.
+  revalidateTechnicalLibrary(
+    document.product.slug
+  )
+
+  redirect("/admin/technical-library")
 }
 
 // =========================
@@ -651,6 +925,51 @@ export async function updateGallerySection(formData: FormData) {
       },
     })
   }
+
+  revalidateGalleryPages()
+
+  redirect("/admin/gallery")
+}
+export async function deleteGallerySection(formData: FormData) {
+  await guard()
+
+  const id = String(
+    formData.get("id") ?? ""
+  ).trim()
+
+  const confirmation = String(
+    formData.get("confirmation") ?? ""
+  ).trim()
+
+  if (!id || confirmation !== "DELETE") {
+    return
+  }
+
+  const section = await db.gallerySection.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      slug: true,
+    },
+  })
+
+  if (!section) {
+    return
+  }
+
+  await db.$transaction([
+    db.galleryImage.deleteMany({
+      where: {
+        section: section.slug,
+      },
+    }),
+
+    db.gallerySection.delete({
+      where: {
+        id: section.id,
+      },
+    }),
+  ])
 
   revalidateGalleryPages()
 

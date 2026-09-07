@@ -10,10 +10,23 @@ import {
 import Link from 'next/link';
 import { orbitalItems } from '../lib/site-content';
 
+type OrbitalProduct = {
+  slug: string;
+  number: string;
+  name: string;
+  brand: string | null;
+  subtitle: string | null;
+  category: string | null;
+  image: string | null;
+  coverImage: string | null;
+};
+
 export function OrbitalHero({
-  locale
+  locale,
+  products
 }: {
   locale: string;
+  products: OrbitalProduct[];
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -44,6 +57,47 @@ export function OrbitalHero({
 
   const activeRef = useRef(0);
 
+  /*
+   * Existing products keep their current Orbital visual data
+   * from site-content.ts, so the current album design does not change.
+   *
+   * Any NEW visible Product that is not in orbitalItems is generated
+   * automatically from the database product data.
+   */
+  const items = useMemo(() => {
+    return products.map(product => {
+      const href = `/products/${product.slug}`;
+
+      const existingItem = orbitalItems.find(
+        item => item.href === href
+      );
+
+      if (existingItem) {
+        return {
+          ...existingItem,
+          index: product.number,
+          href
+        };
+      }
+
+      return {
+        id: product.slug,
+        index: product.number,
+        eyebrow:
+          product.brand?.trim() || 'KIRMARY',
+        title: product.name.toUpperCase(),
+        subtitle:
+          product.subtitle?.trim() ||
+          product.category?.trim() ||
+          'PRODUCT SYSTEM',
+        image:
+          product.coverImage ||
+          product.image,
+        href
+      };
+    });
+  }, [products]);
+
   const radius = useMemo(() => {
     return [340, 420, 500][spacing];
   }, [spacing]);
@@ -56,7 +110,7 @@ export function OrbitalHero({
     const stage = stageRef.current;
     const ring = ringRef.current;
 
-    if (!stage || !ring) return;
+    if (!stage || !ring || !items.length) return;
 
     let currentTiltX = 0;
     let currentTiltY = 0;
@@ -104,8 +158,8 @@ export function OrbitalHero({
       const nextActive =
         Math.round(
           normalized /
-            (360 / orbitalItems.length)
-        ) % orbitalItems.length;
+            (360 / items.length)
+        ) % items.length;
 
       if (nextActive !== activeRef.current) {
         activeRef.current = nextActive;
@@ -122,7 +176,7 @@ export function OrbitalHero({
         cancelAnimationFrame(raf.current);
       }
     };
-  }, []);
+  }, [items.length]);
 
   /* =========================
      POINTER / DRAG EVENTS
@@ -391,11 +445,11 @@ export function OrbitalHero({
             ref={ringRef}
             className="orbital-ring"
           >
-            {orbitalItems.map(
+            {items.map(
               (item, index) => {
                 const angle =
                   (360 /
-                    orbitalItems.length) *
+                    items.length) *
                   index;
 
                 const itemHref =

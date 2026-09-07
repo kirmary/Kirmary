@@ -1,7 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import path from "node:path";
-import { head, del } from "@vercel/blob";
-import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
+import {
+  del,
+  head,
+  issueSignedToken,
+  presignUrl,
+} from "@vercel/blob";
 import {
   MAX_UPLOAD_BYTES,
   uploadFilename,
@@ -17,41 +21,84 @@ type UploadTicket = {
   size: number;
   expires: number;
 };
-function secret() {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) throw new Error("Vercel Blob is not configured.");
-  return token;
+
+function ticketSecret() {
+  const secret = process.env.ADMIN_SESSION_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "ADMIN_SESSION_SECRET is required for secure admin uploads.",
+    );
+  }
+
+  return secret;
 }
+
 function signature(payload: string) {
-  return createHmac("sha256", secret())
+  return createHmac("sha256", ticketSecret())
     .update(`admin-upload:${payload}`)
     .digest("hex");
 }
+
 export function readUploadTicket(ticket: string): UploadTicket {
   const [payload, mac, ...rest] = ticket.split(".");
+
   if (
     !payload ||
     !mac ||
     rest.length ||
-    mac.length !== 64 ||
-    !timingSafeEqual(Buffer.from(mac), Buffer.from(signature(payload)))
-  )
+    mac.length !== 64
+  ) {
     throw new Error("Invalid upload ticket.");
+  }
+
+  const expected = Buffer.from(signature(payload), "utf8");
+  const received = Buffer.from(mac, "utf8");
+
+  if (
+    expected.length !== received.length ||
+    !timingSafeEqual(received, expected)
+  ) {
+    throw new Error("Invalid upload ticket.");
+  }
+
   const value = JSON.parse(
     Buffer.from(payload, "base64url").toString(),
   ) as UploadTicket;
-  if (value.expires < Date.now())
-    throw new Error("Upload expired. Please upload the file again.");
+
+  if (value.expires < Date.now()) {
+    throw new Error(
+      "Upload expired. Please upload the file again.",
+    );
+  }
+
   return value;
 }
+
 export async function prepareBlobUpload(
-  file: { name: string; type: string; size: number },
+  file: {
+    name: string;
+    type: string;
+    size: number;
+  },
   folder: UploadFolder,
   slug: string,
 ) {
-  const ext = validateUploadMetadata(file, folder, slug);
-  const pathname = `${folder}/${slug}/${uploadFilename(file.name, ext)}`;
-  const expires = Date.now() + 15 * 60 * 1000;
+  const ext = validateUploadMetadata(
+    file,
+    folder,
+    slug,
+  );
+
+  const pathname =
+    `${folder}/${slug}/${uploadFilename(
+      file.name,
+      ext,
+    )}`;
+
+  const expires =
+    Date.now() + 15 * 60 * 1000;
+
   const payload = Buffer.from(
     JSON.stringify({
       pathname,
@@ -61,62 +108,121 @@ export async function prepareBlobUpload(
       expires,
     } satisfies UploadTicket),
   ).toString("base64url");
-  const clientToken = await generateClientTokenFromReadWriteToken({
-    token: secret(),
-    pathname,
-    allowedContentTypes: [file.type],
-    maximumSizeInBytes: file.size,
-    validUntil: expires,
-    addRandomSuffix: false,
-    allowOverwrite: false,
-  });
+
+  /*
+   * Vercel Blob 2.4+:
+   * issueSignedToken authenticates server-side with Vercel OIDC.
+   * No BLOB_READ_WRITE_TOKEN is required.
+   */
+  const signedToken =
+    await issueSignedToken({
+      pathname,
+      operations: ["put"],
+      allowedContentTypes: [file.type],
+      maximumSizeInBytes: file.size,
+      validUntil: expires,
+    });
+
+  const { presignedUrl } =
+    await presignUrl(signedToken, {
+      access: "public",
+      operation: "put",
+      pathname,
+      validUntil: expires,
+      allowedContentTypes: [file.type],
+      maximumSizeInBytes: file.size,
+      addRandomSuffix: false,
+      allowOverwrite: false,
+    });
+
   return {
     storage: "blob",
     pathname,
-    clientToken,
+    presignedUrl,
     ticket: `${payload}.${signature(payload)}`,
   };
 }
-export async function completeBlobUpload(ticket: string) {
+
+export async function completeBlobUpload(
+  ticket: string,
+) {
   const upload = readUploadTicket(ticket);
-  // Resolve through this store's API, never a client-supplied URL (no SSRF).
-  const blob = await head(upload.pathname, { token: secret() });
-  if (blob.pathname !== upload.pathname)
+
+  /*
+   * head() and del() also authenticate through Vercel OIDC
+   * automatically when running inside the connected Vercel project.
+   */
+  const blob = await head(upload.pathname);
+
+  if (blob.pathname !== upload.pathname) {
     throw new Error("Upload path mismatch.");
+  }
+
   if (
     blob.size !== upload.size ||
     blob.size > MAX_UPLOAD_BYTES ||
     blob.contentType !== upload.type
-  )
-    throw new Error("Uploaded file metadata does not match.");
+  ) {
+    throw new Error(
+      "Uploaded file metadata does not match.",
+    );
+  }
+
   const response = await fetch(blob.url, {
-    headers: { Range: "bytes=0-31" },
+    headers: {
+      Range: "bytes=0-31",
+    },
     cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(15000),
   });
-  if (!response.ok || !response.body)
-    throw new Error("Unable to verify the uploaded file. Please retry.");
+
+  if (!response.ok || !response.body) {
+    throw new Error(
+      "Unable to verify the uploaded file. Please retry.",
+    );
+  }
+
   const reader = response.body.getReader();
   let prefix = Buffer.alloc(0);
+
   try {
     while (prefix.length < 32) {
       const chunk = await reader.read();
-      if (chunk.done) break;
+
+      if (chunk.done) {
+        break;
+      }
+
       prefix = Buffer.concat([
         prefix,
-        Buffer.from(chunk.value).subarray(0, 32 - prefix.length),
+        Buffer.from(chunk.value).subarray(
+          0,
+          32 - prefix.length,
+        ),
       ]);
     }
   } finally {
     await reader.cancel();
   }
+
   try {
-    validateUploadSignature(prefix, path.extname(upload.pathname));
+    validateUploadSignature(
+      prefix,
+      path.extname(upload.pathname),
+    );
   } catch (error) {
-    // Only this newly issued, UUID-named upload can be removed, never old assets.
-    await del(blob.url, { token: secret() });
+    /*
+     * Only this newly issued upload is removed.
+     * Existing website assets are never touched.
+     */
+    await del(blob.url);
     throw error;
   }
-  return { success: true, path: blob.url, originalFileName: upload.name };
+
+  return {
+    success: true,
+    path: blob.url,
+    originalFileName: upload.name,
+  };
 }

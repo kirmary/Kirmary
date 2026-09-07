@@ -41,12 +41,17 @@ export default async function Page({
 
   const websiteProducts = products.map(product => ({
     id: product.slug,
+    slug: product.slug,
     number: product.number,
     name: product.name,
     ar: product.nameAr,
+    brand: product.brand ?? '',
+    subtitle: product.subtitle ?? '',
+    category: product.category ?? '',
     description: product.description,
     descriptionAr: product.descriptionAr,
-    image: product.image,
+    image: product.image || product.coverImage,
+    coverImage: product.coverImage || product.image || '',
     tags: product.tags
   }));
 
@@ -63,7 +68,10 @@ export default async function Page({
         DENSITY_DISSIPATION={4.4}
       />
 
-      <OrbitalHero locale={locale} />
+      <OrbitalHero
+        locale={locale}
+        products={websiteProducts}
+      />
 
       <HomeSections
         locale={locale}
